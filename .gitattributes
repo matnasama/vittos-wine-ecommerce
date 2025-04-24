@@ -1,2 +1,33 @@
-# Auto detect text files and perform LF normalization
+# Text files normalization
 * text=auto
+
+# Handle binary files properly
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.rar binary
+
+# Prevent git from attempting to normalize JSON, lockfiles or configs
+*.json text eol=lf
+*.lock text eol=lf
+*.env text eol=lf
+
+# Treat shell scripts and config files as LF (for cross-platform consistency)
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+
+# NodeJS-related
+package.json text eol=lf
+package-lock.json text eol=lf
+
+# Database scripts
+*.sql text eol=lf
