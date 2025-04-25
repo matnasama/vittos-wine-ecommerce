@@ -165,15 +165,47 @@ function Home({ user, setUser }) {
 
       {/* Modal de zoom */}
       <Modal open={openZoomModal} onClose={() => setOpenZoomModal(false)}>
-        <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", bgcolor: "background.paper", p: 4, borderRadius: 2, boxShadow: 24, maxWidth: 400, width: "90%" }}>
-          <IconButton onClick={() => setOpenZoomModal(false)} sx={{ position: "absolute", top: 8, right: 8 }}>
+        <Box 
+          sx={{ 
+            position: "absolute", 
+            top: "50%", 
+            left: "50%", 
+            transform: "translate(-50%, -50%)", 
+            bgcolor: "background.paper", 
+            p: 2, 
+            borderRadius: 2, 
+            boxShadow: 24,
+            maxWidth: "90vw",
+            maxHeight: "90vh",
+            overflow: "auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <IconButton 
+            onClick={() => setOpenZoomModal(false)} 
+            sx={{ position: "absolute", top: 8, right: 8 }}
+          >
             <CloseIcon />
           </IconButton>
           {zoomImage && (
-            <img src={zoomImage} alt="Zoom" style={{ width: "100%", objectFit: "contain" }} />
+            <img 
+              src={zoomImage} 
+              alt="Zoom" 
+              style={{ 
+                maxWidth: "100%", 
+                maxHeight: "80vh", 
+                width: "auto", 
+                height: "auto",
+                objectFit: "contain",
+                margin: "auto"
+              }} 
+            />
           )}
         </Box>
       </Modal>
+
 
       {/* Modal de login */}
       {showLogin && (

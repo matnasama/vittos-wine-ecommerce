@@ -8,6 +8,11 @@ import MisPedidos from "./components/MisPedidos";
 import NavigationBar from "./components/NavigationBar"; // importamos el nuevo
 import { CartProvider } from "./contexts/CartContext";
 import Footer from "./components/Footer";
+import AdminLayout from './admin/AdminLayout';
+import Dashboard from './admin/Dashboard';
+import ProductsAdmin from './admin/ProductsAdmin';
+import OrdersAdmin from './admin/OrdersAdmin';
+import UsersAdmin from './admin/UsersAdmin';
 import "./App.css";
 
 function App() {
@@ -43,6 +48,12 @@ function App() {
             }
           />
           <Route path="/register" element={<Register />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="products" element={<ProductsAdmin />} />
+            <Route path="orders" element={<OrdersAdmin />} />
+            <Route path="users" element={<UsersAdmin />} />
+          </Route>
         </Routes>
         <Footer />
       </Router>

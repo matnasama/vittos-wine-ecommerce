@@ -1,10 +1,12 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { getConnection } = require('./database');
-const verifyToken = require('./verifyToken');
-require('dotenv').config();
+const { verifyToken, verifyAdmin } = require('./verifyToken');
+const productosRouter = require('./productos');
 
 const app = express();
 const PORT = process.env.SERVER_PORT || 4000;
@@ -17,6 +19,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+
+// 🔗 Rutas protegidas para productos
+app.use('/api/productos', productosRouter);
 
 // 🔐 LOGIN
 app.post('/login', async (req, res) => {
@@ -31,7 +36,7 @@ app.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Credenciales incorrectas' });
     }
 
-    const token = jwt.sign({ id: user.id, usuario: user.usuario }, SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.id, usuario: user.usuario, rol: user.rol }, SECRET, { expiresIn: '1h' });
 
     res.json({
       message: 'Autenticación exitosa',
@@ -50,7 +55,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// 🛒 OBTENER PRODUCTOS
+// 🛒 OBTENER PRODUCTOS (opcional, ya está cubierto en productosRouter)
 app.get('/productos', async (req, res) => {
   try {
     const connection = getConnection();

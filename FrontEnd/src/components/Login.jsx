@@ -1,99 +1,132 @@
-import React, { useState, useEffect } from 'react';
-import { TextField, Button, Box, Typography, Alert } from '@mui/material';
+import React, { useState } from 'react';
+import { TextField, Button, Box, Typography, Alert, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
 
 const Login = ({ onLogin }) => {
-  const [usuario, setUsuario] = useState('');
-  const [password, setPassword] = useState('');
+  const [credentials, setCredentials] = useState({
+    usuario: '',
+    password: ''
+  });
   const [error, setError] = useState('');
-  const [themeMode, setThemeMode] = useState('light');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const theme = useTheme();
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e) => {
-      setThemeMode(e.matches ? 'dark' : 'light');
-    };
-    handleChange(mediaQuery);
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCredentials(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
     setError('');
+    setLoading(true);
+    
     try {
       const res = await fetch('http://localhost:4000/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, password }),
+        body: JSON.stringify(credentials),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message);
-        return;
+        throw new Error(data.message || 'Error de autenticación');
       }
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       onLogin(data.user);
+      
+      // Redirigir a admin si es administrador
+      if (data.user.rol === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
-      setError('Error al conectar con el servidor');
+      setError(err.message || 'Error al conectar con el servidor');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Box sx={{ maxWidth: 400, margin: 'auto', mt: 4 }}>
-      <Typography variant="h5" mb={2} sx={{ color: themeMode === 'dark' ? 'white' : 'black', transition: 'all 0.3s ease' }}>
+    <Box 
+      component="form"
+      onSubmit={handleLogin}
+      sx={{ 
+        maxWidth: 400, 
+        margin: 'auto', 
+        mt: 4,
+        p: 3,
+        borderRadius: 2,
+        boxShadow: 3,
+        backgroundColor: theme.palette.background.paper
+      }}
+    >
+      <Typography variant="h5" mb={2} textAlign="center">
         Iniciar sesión
       </Typography>
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       <TextField
         fullWidth
+        name="usuario"
         label="Usuario"
-        value={usuario}
-        onChange={(e) => setUsuario(e.target.value)}
+        value={credentials.usuario}
+        onChange={handleChange}
         margin="normal"
-        InputLabelProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' }
-        }}
-        InputProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' },
-          sx: {
-            '& fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&:hover fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&.Mui-focused fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' }
-          }
-        }}
+        required
+        disabled={loading}
       />
 
       <TextField
         fullWidth
+        name="password"
         label="Contraseña"
         type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        value={credentials.password}
+        onChange={handleChange}
         margin="normal"
-        InputLabelProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' }
-        }}
-        InputProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' },
-          sx: {
-            '& fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&:hover fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&.Mui-focused fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' }
-          }
-        }}
+        required
+        disabled={loading}
       />
 
-      <Button variant="contained" onClick={handleLogin} fullWidth sx={{ mt: 2, backgroundColor:'#e4adb0' }}>
-        Entrar
+      <Button 
+        type="submit"
+        variant="contained" 
+        fullWidth 
+        sx={{ 
+          mt: 2,
+          backgroundColor: '#e4adb0',
+          '&:hover': {
+            backgroundColor: '#d49a9d'
+          },
+          height: '42px'
+        }}
+        disabled={loading}
+      >
+        {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
       </Button>
 
-      <Button variant="text" color="secondary" fullWidth sx={{ mt: 2 }} onClick={() => navigate('/register')}>
+      <Button 
+        variant="text" 
+        fullWidth 
+        sx={{ mt: 2 }}
+        onClick={() => navigate('/register')}
+        disabled={loading}
+      >
         ¿No tenés cuenta? Registrate aquí
       </Button>
     </Box>
