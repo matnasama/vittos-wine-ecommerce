@@ -39,7 +39,7 @@ const MisPedidos = () => {
                           Precio unitario: ${prod.precio}
                         </Typography><br/>
                         <Typography component="span" variant="body2">
-                          Marca: {prod.marca}
+                          Categoría: {prod.categoria}
                         </Typography>
                       </>
                     }
