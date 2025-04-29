@@ -1,18 +1,22 @@
 require('dotenv').config();
-
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+
 const { getConnection } = require('./database');
-const { verifyToken, verifyAdmin } = require('./verifyToken');
+const { verifyToken } = require('./verifyToken');
+
+// Rutas externas
 const productosRouter = require('./productos');
+const pedidosRouter = require('./pedidos');
+const usuariosRouter = require('./usuarios');
 
 const app = express();
 const PORT = process.env.SERVER_PORT || 4000;
 const SECRET = process.env.JWT_SECRET;
 
-// Middleware
+// 🧩 Middlewares
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -20,8 +24,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// 🔗 Rutas protegidas para productos
+// 📦 Rutas
 app.use('/api/productos', productosRouter);
+app.use('/api', pedidosRouter);
+app.use('/api', usuariosRouter);
 
 // 🔐 LOGIN
 app.post('/login', async (req, res) => {
@@ -29,14 +35,21 @@ app.post('/login', async (req, res) => {
 
   try {
     const connection = getConnection();
-    const [rows] = await connection.query('SELECT * FROM usuarios WHERE usuario = ?', [usuario]);
+    const [rows] = await connection.query(
+      'SELECT * FROM usuarios WHERE usuario = ?',
+      [usuario]
+    );
     const user = rows[0];
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ message: 'Credenciales incorrectas' });
     }
 
-    const token = jwt.sign({ id: user.id, usuario: user.usuario, rol: user.rol }, SECRET, { expiresIn: '1h' });
+    const token = jwt.sign(
+      { id: user.id, usuario: user.usuario, rol: user.rol },
+      SECRET,
+      { expiresIn: '1h' }
+    );
 
     res.json({
       message: 'Autenticación exitosa',
@@ -55,29 +68,37 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// 🛒 OBTENER PRODUCTOS (opcional, ya está cubierto en productosRouter)
-app.get('/productos', async (req, res) => {
+// 🧾 REGISTRO
+app.post('/register', async (req, res) => {
+  const { nombre, usuario, email, telefono, password } = req.body;
+
   try {
     const connection = getConnection();
-    const [rows] = await connection.query('SELECT * FROM productos');
-    res.json(rows);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await connection.query(
+      'INSERT INTO usuarios (nombre, usuario, email, telefono, password, rol) VALUES (?, ?, ?, ?, ?, ?)',
+      [nombre, usuario, email, telefono, hashedPassword, 'cliente']
+    );
+
+    res.json({ message: 'Usuario creado exitosamente' });
   } catch (error) {
-    console.error('Error al obtener productos:', error);
-    res.status(500).json({ error: 'Error al obtener productos' });
+    console.error('Error en registro:', error);
+    res.status(500).json({ message: 'Error al crear usuario' });
   }
 });
 
-// 🧾 CREAR ORDEN
+// 🛒 CREAR ORDEN
 app.post('/orden', verifyToken, async (req, res) => {
   const { userId, productos, total } = req.body;
 
   try {
     const connection = getConnection();
+
     const [pedidoRes] = await connection.query(
       'INSERT INTO pedidos (usuario_id, total) VALUES (?, ?)',
       [userId, total]
     );
-
     const pedidoId = pedidoRes.insertId;
 
     const detalles = productos.map(p =>
@@ -91,8 +112,8 @@ app.post('/orden', verifyToken, async (req, res) => {
 
     res.json({ message: 'Orden registrada con éxito' });
   } catch (error) {
-    console.error('Error al registrar la orden:', error);
-    res.status(500).json({ error: 'Error al registrar la orden' });
+    console.error('Error al registrar orden:', error);
+    res.status(500).json({ error: 'Error al registrar orden' });
   }
 });
 
@@ -139,24 +160,6 @@ app.get('/mis-pedidos', verifyToken, async (req, res) => {
   } catch (error) {
     console.error('Error al obtener pedidos:', error);
     res.status(500).json({ error: 'Error al obtener pedidos' });
-  }
-});
-
-// ✍️ REGISTRO
-app.post('/register', async (req, res) => {
-  const { nombre, usuario, email, telefono, password } = req.body;
-  try {
-    const connection = getConnection();
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await connection.query(
-      'INSERT INTO usuarios (nombre, usuario, email, telefono, password, rol) VALUES (?, ?, ?, ?, ?, ?)',
-      [nombre, usuario, email, telefono, hashedPassword, 'cliente']
-    );
-
-    res.json({ message: 'Usuario creado exitosamente' });
-  } catch (error) {
-    console.error('Error en register:', error);
-    res.status(500).json({ message: 'Error al crear usuario' });
   }
 });
 

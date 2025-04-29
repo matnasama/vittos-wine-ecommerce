@@ -37,7 +37,7 @@ router.post('/', verifyToken, verifyAdmin, async (req, res) => {
       precio,
       stock,
       categoria,
-      imagen_url   // ✅ Aquí corregido
+      imagen_url  
     });
   } catch (error) {
     console.error('Error al crear producto:', error.message);

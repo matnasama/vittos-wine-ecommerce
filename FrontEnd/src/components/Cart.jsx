@@ -32,19 +32,19 @@ const Cart = () => {
   const onFinalizarCompra = async () => {
     const user = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
-
+  
     if (!user || !token) {
       alert("Debes iniciar sesión para finalizar la compra.");
       navigate("/login");
       return;
     }
-
+  
     const orden = {
       userId: user.id,
       productos: cart.map(({ id, quantity, price }) => ({ productoId: id, quantity, price })),
       total,
     };
-
+  
     try {
       const res = await fetch("http://localhost:4000/orden", {
         method: "POST",
@@ -54,17 +54,23 @@ const Cart = () => {
         },
         body: JSON.stringify(orden),
       });
-
+  
       if (!res.ok) throw new Error("Error al registrar la orden");
-
-      alert("Compra realizada con éxito!");
+  
+      setToastMessage("Pedido realizado con éxito");
+      setOpenToast(true);
       clearCart();
-      navigate("/");
+  
+      setTimeout(() => {
+        navigate("/mis-pedidos");
+      }, 2000);
     } catch (error) {
       console.error("Error al registrar la orden:", error);
-      alert("Hubo un error al procesar tu orden.");
+      setToastMessage("Hubo un error al procesar tu pedido.");
+      setOpenToast(true);
     }
   };
+ 
 
   const handleClearCart = () => {
     clearCart();

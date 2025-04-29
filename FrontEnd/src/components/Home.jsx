@@ -48,19 +48,22 @@ function Home({ user, setUser }) {
   const { cart, addToCart, clearCart } = useCart();
 
   useEffect(() => {
-    fetch("http://localhost:4000/productos")
-      .then((res) => res.json())
+    fetch("http://localhost:4000/api/productos")  // Agrega /api
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
         const winesAgrupados = agruparProductosPorMarca(data);
         setWines(winesAgrupados);
       })
-      .catch((err) => console.error("Error al cargar productos:", err));
+      .catch((err) => {
+        console.error("Error al cargar productos:", err);
+        // Puedes mostrar un mensaje de error al usuario aquí
+      });
   }, []);
-
-  const handleZoom = (imageName) => {
-    setZoomImage(`/products/${imageName}`);
-    setOpenZoomModal(true);
-  };
 
   const handleAddToCart = (variant) => {
     addToCart({
