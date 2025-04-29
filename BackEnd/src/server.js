@@ -3,9 +3,11 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
 const { getConnection } = require('./database');
 const { verifyToken } = require('./verifyToken');
+const rateLimit = require("express-rate-limit");
+const { body, validationResult } = require("express-validator");
+
 
 // Rutas externas
 const productosRouter = require('./productos');
@@ -17,11 +19,18 @@ const PORT = process.env.SERVER_PORT || 4000;
 const SECRET = process.env.JWT_SECRET;
 
 // 🧩 Middlewares
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? ['https://tusitio.netlify.app']
+  : ['http://localhost:5173']; // o el puerto de tu frontend
+
 app.use(cors({
-  origin: '*',
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
+
+
 app.use(express.json());
 
 // 📦 Rutas
@@ -29,8 +38,21 @@ app.use('/api/productos', productosRouter);
 app.use('/api', pedidosRouter);
 app.use('/api', usuariosRouter);
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: 'Demasiados intentos de login. Intenta de nuevo más tarde.'
+});
+
+
 // 🔐 LOGIN
-app.post('/login', async (req, res) => {
+app.post('/login', loginLimiter, [
+  body('usuario').notEmpty(),
+  body('password').notEmpty(),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
   const { usuario, password } = req.body;
 
   try {
@@ -47,7 +69,7 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, usuario: user.usuario, rol: user.rol },
-      SECRET,
+      process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
@@ -68,8 +90,18 @@ app.post('/login', async (req, res) => {
   }
 });
 
+
 // 🧾 REGISTRO
-app.post('/register', async (req, res) => {
+app.post('/register', [
+  body('nombre').notEmpty(),
+  body('usuario').notEmpty(),
+  body('email').isEmail(),
+  body('telefono').notEmpty(),
+  body('password').isLength({ min: 6 }),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
   const { nombre, usuario, email, telefono, password } = req.body;
 
   try {
@@ -87,6 +119,7 @@ app.post('/register', async (req, res) => {
     res.status(500).json({ message: 'Error al crear usuario' });
   }
 });
+
 
 // 🛒 CREAR ORDEN
 app.post('/orden', verifyToken, async (req, res) => {
