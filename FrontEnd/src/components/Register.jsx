@@ -1,158 +1,162 @@
-import React, { useState, useEffect } from 'react';
-import { Box, TextField, Button, Typography, Alert } from '@mui/material';
+import React, { useState } from 'react';
+import { TextField, Button, Box, Typography, Alert, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '@mui/material/styles';
 
 const Register = () => {
-  const [nombre, setNombre] = useState('');
-  const [usuario, setUsuario] = useState('');
-  const [email, setEmail] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    nombre: '',
+    email: '',
+    telefono: '',
+    password: '',
+    direccion: ''
+  });
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [themeMode, setThemeMode] = useState('light');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const theme = useTheme();
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e) => {
-      setThemeMode(e.matches ? 'dark' : 'light');
-    };
-    handleChange(mediaQuery);
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
-  const handleRegister = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError('');
-    setSuccess('');
+    setLoading(true);
+    
     try {
-      const res = await fetch('http://localhost:4000/register', {
+      const res = await fetch('http://localhost:4000/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, usuario, email, telefono, password }),
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message);
-        return;
+        throw new Error(data.message || 'Error en el registro');
       }
 
-      setSuccess('Usuario registrado exitosamente!');
-      setTimeout(() => navigate('/login'), 2000);
+      // Redirigir al login después del registro exitoso
+      navigate('/login');
     } catch (err) {
-      setError('Error al conectar con el servidor');
+      setError(err.message || 'Error al conectar con el servidor');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Box sx={{ maxWidth: 400, margin: 'auto', mt: 4 }}>
-      <Typography variant="h5" mb={2} sx={{ color: themeMode === 'dark' ? 'white' : 'black', transition: 'all 0.3s ease' }}>
-        Crear cuenta
+    <Box 
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{ 
+        maxWidth: 400, 
+        margin: 'auto', 
+        mt: 4,
+        p: 3,
+        borderRadius: 2,
+        boxShadow: 3,
+        backgroundColor: theme.palette.background.paper
+      }}
+    >
+      <Typography variant="h5" mb={2} textAlign="center">
+        Registro
       </Typography>
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+      
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       <TextField
         fullWidth
-        label="Nombre"
-        value={nombre}
-        onChange={(e) => setNombre(e.target.value)}
+        name="nombre"
+        label="Nombre completo"
+        value={formData.nombre}
+        onChange={handleChange}
         margin="normal"
-        InputLabelProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' }
-        }}
-        InputProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' },
-          sx: {
-            '& fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&:hover fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&.Mui-focused fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' }
-          }
-        }}
+        required
+        disabled={loading}
       />
 
       <TextField
         fullWidth
-        label="Usuario"
-        value={usuario}
-        onChange={(e) => setUsuario(e.target.value)}
-        margin="normal"
-        InputLabelProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' }
-        }}
-        InputProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' },
-          sx: {
-            '& fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&:hover fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&.Mui-focused fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' }
-          }
-        }}
-      />
-
-      <TextField
-        fullWidth
+        name="email"
         label="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        type="email"
+        value={formData.email}
+        onChange={handleChange}
         margin="normal"
-        InputLabelProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' }
-        }}
-        InputProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' },
-          sx: {
-            '& fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&:hover fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&.Mui-focused fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' }
-          }
-        }}
+        required
+        disabled={loading}
       />
 
       <TextField
         fullWidth
+        name="telefono"
         label="Teléfono"
-        value={telefono}
-        onChange={(e) => setTelefono(e.target.value)}
+        value={formData.telefono}
+        onChange={handleChange}
         margin="normal"
-        InputLabelProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' }
-        }}
-        InputProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' },
-          sx: {
-            '& fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&:hover fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&.Mui-focused fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' }
-          }
-        }}
+        required
+        disabled={loading}
       />
 
       <TextField
         fullWidth
+        name="direccion"
+        label="Dirección"
+        value={formData.direccion}
+        onChange={handleChange}
+        margin="normal"
+        required
+        disabled={loading}
+      />
+
+      <TextField
+        fullWidth
+        name="password"
         label="Contraseña"
         type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        value={formData.password}
+        onChange={handleChange}
         margin="normal"
-        InputLabelProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' }
-        }}
-        InputProps={{
-          style: { color: themeMode === 'dark' ? 'white' : 'black' },
-          sx: {
-            '& fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&:hover fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' },
-            '&.Mui-focused fieldset': { borderColor: themeMode === 'dark' ? 'white' : 'black' }
-          }
-        }}
+        required
+        disabled={loading}
       />
 
-      <Button variant="contained" onClick={handleRegister} fullWidth sx={{ mt: 2, backgroundColor:'#e4adb0' }}>
-        Registrarme
+      <Button 
+        type="submit"
+        variant="contained" 
+        fullWidth 
+        sx={{ 
+          mt: 2,
+          backgroundColor: '#e4adb0',
+          '&:hover': {
+            backgroundColor: '#d49a9d'
+          },
+          height: '42px'
+        }}
+        disabled={loading}
+      >
+        {loading ? <CircularProgress size={24} color="inherit" /> : 'Registrarse'}
+      </Button>
+
+      <Button 
+        variant="text" 
+        fullWidth 
+        sx={{ mt: 2 }}
+        onClick={() => navigate('/login')}
+        disabled={loading}
+      >
+        ¿Ya tenés cuenta? Iniciá sesión aquí
       </Button>
     </Box>
   );

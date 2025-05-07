@@ -18,9 +18,14 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle
+  DialogTitle,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Alert
 } from '@mui/material';
-import { Edit, Delete, Save, Cancel, Sort, RestartAlt } from '@mui/icons-material';
+import { Edit, Delete, Save, Cancel, Sort, RestartAlt, Add } from '@mui/icons-material';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
@@ -33,19 +38,26 @@ export default function UsersAdmin() {
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState('asc');
   const [openModal, setOpenModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState('');
   
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const fetchUsuarios = async () => {
     try {
-      const res = await axios.get('/api/usuarios', {
+      const res = await axios.get('http://localhost:4000/api/usuarios', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setUsuarios(res.data);
       setFilteredUsuarios(res.data);
     } catch (err) {
       console.error('Error al obtener usuarios:', err);
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
   };
 
@@ -83,7 +95,21 @@ export default function UsersAdmin() {
     setFilteredUsuarios(usuarios);
   };
 
+  const handleCreate = () => {
+    setIsCreating(true);
+    setForm({
+      nombre: '',
+      email: '',
+      password: '',
+      rol: 'cliente',
+      telefono: '',
+      direccion: ''
+    });
+    setOpenModal(true);
+  };
+
   const handleEdit = (usuario) => {
+    setIsCreating(false);
     setEditandoId(usuario.id);
     setForm({ ...usuario });
     setOpenModal(true);
@@ -93,34 +119,51 @@ export default function UsersAdmin() {
     setEditandoId(null);
     setForm({});
     setOpenModal(false);
+    setError('');
   };
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSave = async (id) => {
+  const handleSave = async () => {
     try {
-      await axios.put(`/api/usuarios/${id}`, form, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      setError('');
+      if (isCreating) {
+        await axios.post('http://localhost:4000/api/register', form);
+      } else {
+        await axios.put(`http://localhost:4000/api/usuarios/${editandoId}`, form, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+      }
       setEditandoId(null);
       setOpenModal(false);
       fetchUsuarios();
     } catch (err) {
       console.error('Error al guardar usuario:', err);
+      setError(err.response?.data?.message || 'Error al guardar usuario');
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar este usuario?')) return;
     try {
-      await axios.delete(`/api/usuarios/${id}`, {
+      await axios.delete(`http://localhost:4000/api/usuarios/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       fetchUsuarios();
     } catch (err) {
       console.error('Error al eliminar usuario:', err);
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
   };
 
@@ -177,6 +220,21 @@ export default function UsersAdmin() {
           >
             Resetear filtros
           </Button>
+
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={handleCreate}
+            sx={{
+              backgroundColor: '#e4adb0',
+              '&:hover': {
+                backgroundColor: '#d49a9d'
+              },
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Crear Usuario
+          </Button>
         </Box>
       </Box>
 
@@ -190,6 +248,7 @@ export default function UsersAdmin() {
                 <TableCell>Email</TableCell>
                 <TableCell>Rol</TableCell>
                 <TableCell>Teléfono</TableCell>
+                <TableCell>Dirección</TableCell>
                 <TableCell align="right">Acciones</TableCell>
               </TableRow>
             </TableHead>
@@ -200,6 +259,7 @@ export default function UsersAdmin() {
                   <TableCell>{usuario.email}</TableCell>
                   <TableCell>{usuario.rol}</TableCell>
                   <TableCell>{usuario.telefono}</TableCell>
+                  <TableCell>{usuario.direccion}</TableCell>
                   <TableCell align="right">
                     <IconButton onClick={() => handleEdit(usuario)} color="primary">
                       <Edit />
@@ -238,47 +298,76 @@ export default function UsersAdmin() {
                     <strong>Rol:</strong> {usuario.rol}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    <strong>Teléfono:</strong> {usuario.telefono || 'N/A'}
+                    <strong>Teléfono:</strong> {usuario.telefono}
                   </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Dirección:</strong> {usuario.direccion}
+                  </Typography>
+                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                    <IconButton onClick={() => handleEdit(usuario)} color="primary" size="small">
+                      <Edit />
+                    </IconButton>
+                    <IconButton onClick={() => handleDelete(usuario.id)} color="error" size="small">
+                      <Delete />
+                    </IconButton>
+                  </Box>
                 </CardContent>
-                <Box sx={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  p: 1,
-                  gap: 1
-                }}>
-                  <IconButton onClick={() => handleEdit(usuario)} color="primary">
-                    <Edit />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(usuario.id)} color="error">
-                    <Delete />
-                  </IconButton>
-                </Box>
               </Card>
             </Grid>
           ))}
         </Grid>
       )}
 
-      {/* Modal para editar */}
-      <Dialog open={openModal} onClose={handleCancel} fullWidth maxWidth="sm">
-        <DialogTitle>Editar Usuario</DialogTitle>
+      {/* Modal de edición/creación */}
+      <Dialog open={openModal} onClose={handleCancel} maxWidth="sm" fullWidth>
+        <DialogTitle>{isCreating ? 'Crear Usuario' : 'Editar Usuario'}</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
             <TextField
               label="Nombre"
               name="nombre"
               value={form.nombre || ''}
               onChange={handleChange}
               fullWidth
+              required
             />
             <TextField
               label="Email"
               name="email"
+              type="email"
               value={form.email || ''}
               onChange={handleChange}
               fullWidth
+              required
             />
+            {isCreating && (
+              <TextField
+                label="Contraseña"
+                name="password"
+                type="password"
+                value={form.password || ''}
+                onChange={handleChange}
+                fullWidth
+                required
+              />
+            )}
+            <FormControl fullWidth>
+              <InputLabel>Rol</InputLabel>
+              <Select
+                name="rol"
+                value={form.rol || ''}
+                onChange={handleChange}
+                label="Rol"
+              >
+                <MenuItem value="admin">Admin</MenuItem>
+                <MenuItem value="cliente">Cliente</MenuItem>
+              </Select>
+            </FormControl>
             <TextField
               label="Teléfono"
               name="telefono"
@@ -287,23 +376,22 @@ export default function UsersAdmin() {
               fullWidth
             />
             <TextField
-              label="Rol"
-              name="rol"
-              value={form.rol || ''}
+              label="Dirección"
+              name="direccion"
+              value={form.direccion || ''}
               onChange={handleChange}
               fullWidth
-              select
-              SelectProps={{ native: true }}
-            >
-              <option value="admin">Admin</option>
-              <option value="cliente">Cliente</option>
-            </TextField>
+              multiline
+              rows={2}
+            />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancel}>Cancelar</Button>
-          <Button onClick={() => handleSave(form.id)} variant="contained">
-            Guardar
+          <Button onClick={handleCancel} color="inherit">
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} color="primary" variant="contained">
+            {isCreating ? 'Crear' : 'Guardar'}
           </Button>
         </DialogActions>
       </Dialog>

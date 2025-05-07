@@ -1,3 +1,4 @@
+// src/admin/ProductsAdmin.jsx
 import { useEffect, useState } from 'react';
 import {
   Box, Button, Card, CardContent, Typography,
@@ -87,16 +88,22 @@ export default function ProductsAdmin() {
 
   const handleSave = async () => {
     try {
+      const payload = {
+        ...currentProduct,
+        precio: Number(currentProduct.precio),
+        stock: Number(currentProduct.stock)
+      };
+
       if (currentProduct.id) {
         await axios.put(
           `http://localhost:4000/api/productos/${currentProduct.id}`,
-          currentProduct,
+          payload,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
       } else {
         await axios.post(
           'http://localhost:4000/api/productos',
-          currentProduct,
+          payload,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
       }
@@ -109,7 +116,6 @@ export default function ProductsAdmin() {
 
   return (
     <Box sx={{ maxWidth: '100%', overflowX: 'hidden' }}>
-      {/* Título y acciones */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" sx={{ mb: 2 }}>Gestión de Productos</Typography>
 
@@ -174,7 +180,6 @@ export default function ProductsAdmin() {
         </Box>
       </Box>
 
-      {/* Lista de productos */}
       <Grid container spacing={3} p={2}>
         {filteredProducts.map((product) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>

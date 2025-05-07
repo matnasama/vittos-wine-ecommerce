@@ -104,8 +104,8 @@ function Home({ user, setUser }) {
                     <Card sx={{ height: "100%", display: "flex", flexDirection: "column", borderRadius: 2 }}>
                       <CardMedia
                         component="img"
-                        image={`/products/${variant.image}`}
-                        alt={variant.type}
+                        image={`/products/${variant.image}`} 
+                         alt={variant.type}
                         height="200"
                         sx={{ objectFit: "contain", p: 2 }}
                       />

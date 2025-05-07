@@ -1,50 +1,36 @@
-const express = require('express');
+const express = require("express");
+const database = require("./database");
+const bcrypt = require("bcrypt");
 const router = express.Router();
-const { getConnection } = require('./database');
-const { verifyToken, verifyAdmin } = require('./verifyToken');
 
-// ✅ Obtener todos los usuarios
-router.get('/usuarios', verifyToken, verifyAdmin, async (req, res) => {
-  try {
-    const connection = getConnection();
-    const [rows] = await connection.query('SELECT * FROM usuarios');
-    res.json(rows);
-  } catch (error) {
-    console.error('Error al obtener usuarios:', error);
-    res.status(500).json({ message: 'Error al obtener usuarios' });
-  }
+// Obtener todos los usuarios
+router.get("/", async (req, res) => {
+    try {
+        const connection = database.getConnection();
+        const result = await connection.query("SELECT id, nombre, email, rol FROM usuarios");
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error al obtener usuarios:", err);
+        res.status(500).json({ message: "Error al obtener usuarios" });
+    }
 });
 
-// ✏️ Editar usuario
-router.put('/usuarios/:id', verifyToken, verifyAdmin, async (req, res) => {
-  const { id } = req.params;
-  const { nombre, email, direccion, telefono } = req.body;
+// Crear usuario (registro)
+router.post("/", async (req, res) => {
+    const { nombre, email, password, rol } = req.body;
 
-  try {
-    const connection = getConnection();
-    await connection.query(
-      'UPDATE usuarios SET nombre = ?, email = ?, direccion = ?, telefono = ? WHERE id = ?',
-      [nombre, email, direccion, telefono, id]
-    );
-    res.json({ mensaje: 'Usuario actualizado correctamente' });
-  } catch (error) {
-    console.error('Error al actualizar usuario:', error);
-    res.status(500).json({ mensaje: 'Error al actualizar usuario' });
-  }
-});
-
-// ❌ Eliminar usuario
-router.delete('/usuarios/:id', verifyToken, verifyAdmin, async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const connection = getConnection();
-    await connection.query('DELETE FROM usuarios WHERE id = ?', [id]);
-    res.json({ mensaje: 'Usuario eliminado correctamente' });
-  } catch (error) {
-    console.error('Error al eliminar usuario:', error);
-    res.status(500).json({ mensaje: 'Error al eliminar usuario' });
-  }
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const connection = database.getConnection();
+        const result = await connection.query(
+            "INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4) RETURNING id, nombre, email, rol",
+            [nombre, email, hashedPassword, rol || "usuario"]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error("Error al crear usuario:", err);
+        res.status(500).json({ message: "Error al crear usuario" });
+    }
 });
 
 module.exports = router;

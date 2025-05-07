@@ -5,7 +5,7 @@ import { useTheme } from '@mui/material/styles';
 
 const Login = ({ onLogin }) => {
   const [credentials, setCredentials] = useState({
-    usuario: '',
+    email: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -27,7 +27,7 @@ const Login = ({ onLogin }) => {
     setLoading(true);
     
     try {
-      const res = await fetch('http://localhost:4000/login', {
+      const res = await fetch('http://localhost:4000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials),
@@ -82,9 +82,10 @@ const Login = ({ onLogin }) => {
 
       <TextField
         fullWidth
-        name="usuario"
-        label="Usuario"
-        value={credentials.usuario}
+        name="email"
+        label="Email"
+        type="email"
+        value={credentials.email}
         onChange={handleChange}
         margin="normal"
         required

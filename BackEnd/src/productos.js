@@ -1,82 +1,86 @@
-const express = require('express');
+const express = require("express");
+const database = require("./database");
 const router = express.Router();
-const { getConnection } = require('./database');
-const { verifyToken, verifyAdmin } = require('./verifyToken');
 
-// GET público
-router.get('/', async (req, res) => {
-  try {
-    const connection = await getConnection();
-    const [rows] = await connection.query('SELECT * FROM productos');
-    res.json(rows);
-  } catch (err) {
-    console.error('Error al obtener productos:', err.message);
-    res.status(500).json({ error: 'Error al obtener productos' });
-  }
+// Obtener todos los productos
+router.get("/", async (req, res) => {
+    try {
+        const connection = database.getConnection();
+        const result = await connection.query("SELECT * FROM productos");
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error al obtener productos:", err);
+        res.status(500).json({ message: "Error al obtener productos" });
+    }
 });
 
-// POST solo admin
-router.post('/', verifyToken, verifyAdmin, async (req, res) => {
-  try {
-    const { nombre, descripcion, precio, stock, categoria, imagen: imagen_url } = req.body;
+// Agregar producto
+router.post("/", async (req, res) => {
+    const { nombre, descripcion, precio, imagen, stock, categoria } = req.body;
 
-    if (!nombre || !precio || !stock || !categoria) {
-      return res.status(400).json({ mensaje: 'Faltan campos obligatorios' });
+    if (!nombre || !descripcion || !precio || !imagen || stock == null || !categoria) {
+        return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
 
-    const connection = await getConnection();
-    const [result] = await connection.query(
-      'INSERT INTO productos (nombre, descripcion, precio, stock, categoria, imagen_url) VALUES (?, ?, ?, ?, ?, ?)',
-      [nombre, descripcion, precio, stock, categoria, imagen_url]
-    );
-
-    res.status(201).json({
-      id: result.insertId,
-      nombre,
-      descripcion,
-      precio,
-      stock,
-      categoria,
-      imagen_url  
-    });
-  } catch (error) {
-    console.error('Error al crear producto:', error.message);
-    res.status(500).json({ mensaje: 'Error interno al guardar el producto' });
-  }
+    try {
+        const connection = database.getConnection();
+        const result = await connection.query(
+            "INSERT INTO productos (nombre, descripcion, precio, imagen_url, stock, categoria) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+            [nombre, descripcion, Number(precio), imagen, Number(stock), categoria]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error("Error al agregar producto:", err);
+        res.status(500).json({ message: "Error al agregar producto" });
+    }
 });
 
-// PUT solo admin
-router.put('/:id', verifyToken, verifyAdmin, async (req, res) => {
-  try {
-    const { nombre, descripcion, precio, stock, categoria, imagen: imagen_url } = req.body;
+// Editar producto
+router.put("/:id", async (req, res) => {
     const { id } = req.params;
+    const { nombre, descripcion, precio, imagen, stock, categoria } = req.body;
 
-    const connection = await getConnection();
-    await connection.query(
-      'UPDATE productos SET nombre=?, descripcion=?, precio=?, stock=?, categoria=?, imagen_url=? WHERE id=?',
-      [nombre, descripcion, precio, stock, categoria, imagen_url, id]
-    );
+    if (!nombre || !descripcion || !precio || !imagen || stock == null || !categoria) {
+    return res.status(400).json({ message: "Todos los campos son obligatorios" });
+}
 
-    res.json({ message: 'Producto actualizado' });
-  } catch (err) {
-    console.error('Error al actualizar producto:', err.message);
-    res.status(500).json({ error: 'Error al actualizar producto' });
-  }
+    try {
+        const connection = database.getConnection();
+
+        const check = await connection.query("SELECT * FROM productos WHERE id = $1", [id]);
+        if (check.rowCount === 0) {
+            return res.status(404).json({ message: "Producto no encontrado" });
+        }
+
+        const result = await connection.query(
+            "UPDATE productos SET nombre = $1, descripcion = $2, precio = $3, imagen = $4, stock = $5, categoria = $6 WHERE id = $7 RETURNING *",
+            [nombre, descripcion, Number(precio), imagen, Number(stock), categoria, id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error("Error al actualizar producto:", err);
+        res.status(500).json({ message: "Error al actualizar producto" });
+    }
 });
 
-// DELETE solo admin
-router.delete('/:id', verifyToken, verifyAdmin, async (req, res) => {
-  try {
+// Eliminar producto
+router.delete("/:id", async (req, res) => {
     const { id } = req.params;
 
-    const connection = await getConnection();
-    await connection.query('DELETE FROM productos WHERE id=?', [id]);
+    try {
+        const connection = database.getConnection();
 
-    res.json({ message: 'Producto eliminado' });
-  } catch (err) {
-    console.error('Error al eliminar producto:', err.message);
-    res.status(500).json({ error: 'Error al eliminar producto' });
-  }
+        const check = await connection.query("SELECT * FROM productos WHERE id = $1", [id]);
+        if (check.rowCount === 0) {
+            return res.status(404).json({ message: "Producto no encontrado" });
+        }
+
+        await connection.query("DELETE FROM productos WHERE id = $1", [id]);
+        res.json({ message: "Producto eliminado" });
+    } catch (err) {
+        console.error("Error al eliminar producto:", err);
+        res.status(500).json({ message: "Error al eliminar producto" });
+    }
 });
 
 module.exports = router;

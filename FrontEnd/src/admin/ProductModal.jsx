@@ -3,7 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Button
 } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function ProductModal({ open, handleClose, handleSave, producto, setProducto }) {
   const isEdit = !!producto?.id;
@@ -11,22 +11,18 @@ export default function ProductModal({ open, handleClose, handleSave, producto, 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Validación para campos numéricos
-    if (name === 'precio' || name === 'stock') {
-      if (value && isNaN(value)) return; // No actualizar si no es número
-    }
-    
+    if ((name === 'precio' || name === 'stock') && value && isNaN(value)) return;
+
     setProducto({ ...producto, [name]: value });
   };
 
   const validate = () => {
     const newErrors = {};
-    
     if (!producto.nombre) newErrors.nombre = 'Nombre es requerido';
     if (!producto.precio || isNaN(producto.precio)) newErrors.precio = 'Precio debe ser un número';
     if (!producto.stock || isNaN(producto.stock)) newErrors.stock = 'Stock debe ser un número';
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

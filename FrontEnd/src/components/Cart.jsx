@@ -46,7 +46,7 @@ const Cart = () => {
     };
   
     try {
-      const res = await fetch("http://localhost:4000/orden", {
+      const res = await fetch("http://localhost:4000/api/orden", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

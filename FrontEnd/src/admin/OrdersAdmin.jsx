@@ -79,7 +79,7 @@ export default function OrdersAdmin() {
           errorMessage = 'Acceso denegado. Por favor, inicie sesión nuevamente.';
           localStorage.removeItem('token');
           localStorage.removeItem('user');
-          navigate('/login');
+          window.location.href = '/login';
         } else {
           errorMessage = err.response.data?.message || errorMessage;
         }
@@ -112,6 +112,11 @@ export default function OrdersAdmin() {
       );
     } catch (err) {
       console.error('Error al actualizar estado:', err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
       setError(err.response?.data?.message || 'Error al actualizar el estado');
     }
   };
@@ -243,7 +248,7 @@ export default function OrdersAdmin() {
                     />
                   </ListItemAvatar>
                   <ListItemText
-                    primary={`${prod.marca} ${prod.nombre}`}
+                    primary={`${prod.categoria} ${prod.nombre}`}
                     secondary={`${prod.cantidad} x $${formatMoney(prod.precio)}`}
                     sx={{ flex: '1 1 auto' }}
                   />
