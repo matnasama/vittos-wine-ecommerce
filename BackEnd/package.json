@@ -5,7 +5,9 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "use-local": "copy .env.local .env && echo Switched to local database configuration",
+    "use-remote": "copy .env.remote .env && echo Switched to remote database configuration"
   },
   "keywords": [],
   "author": "",
