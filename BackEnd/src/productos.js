@@ -1,6 +1,8 @@
 const express = require("express");
 const database = require("./database");
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 
 // Obtener todos los productos
 router.get("/", async (req, res) => {
@@ -80,6 +82,24 @@ router.delete("/:id", async (req, res) => {
     } catch (err) {
         console.error("Error al eliminar producto:", err);
         res.status(500).json({ message: "Error al eliminar producto" });
+    }
+});
+
+// Actualizar URLs de imágenes a WebP
+router.post("/update-image-urls", async (req, res) => {
+    try {
+        const connection = database.getConnection();
+        
+        // Leer y ejecutar el script SQL
+        const sqlPath = path.join(__dirname, 'update_image_urls.sql');
+        const sqlScript = fs.readFileSync(sqlPath, 'utf8');
+        
+        await connection.query(sqlScript);
+        
+        res.json({ message: "URLs de imágenes actualizadas correctamente" });
+    } catch (err) {
+        console.error("Error al actualizar URLs de imágenes:", err);
+        res.status(500).json({ message: "Error al actualizar URLs de imágenes" });
     }
 });
 

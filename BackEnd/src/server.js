@@ -247,10 +247,20 @@ app.get('/api/pedidos', verificarToken, esAdmin, async (req, res) => {
     const client = await getConnection();
     const result = await client.query(`
       SELECT 
-        p.id AS pedido_id, p.fecha, p.total, p.estado,
-        u.nombre AS usuario_nombre, u.email AS usuario_email,
-        dp.producto_id, dp.cantidad, dp.precio,
-        pr.nombre AS producto_nombre, pr.categoria
+        p.id AS pedido_id, 
+        p.fecha, 
+        p.total, 
+        p.estado,
+        u.nombre AS usuario_nombre, 
+        u.email AS usuario_email,
+        u.direccion AS usuario_direccion,
+        u.telefono AS usuario_telefono,
+        dp.producto_id, 
+        dp.cantidad, 
+        dp.precio,
+        pr.nombre AS producto_nombre, 
+        pr.categoria,
+        pr.imagen_url
       FROM pedidos p
       JOIN usuarios u ON p.usuario_id = u.id
       JOIN detalle_pedidos dp ON p.id = dp.pedido_id
@@ -266,10 +276,10 @@ app.get('/api/pedidos', verificarToken, esAdmin, async (req, res) => {
           fecha: row.fecha,
           total: row.total,
           estado: row.estado,
-          usuario: {
-            nombre: row.usuario_nombre,
-            email: row.usuario_email
-          },
+          usuario_nombre: row.usuario_nombre,
+          usuario_email: row.usuario_email,
+          usuario_direccion: row.usuario_direccion,
+          usuario_telefono: row.usuario_telefono,
           productos: []
         };
       }
@@ -279,7 +289,8 @@ app.get('/api/pedidos', verificarToken, esAdmin, async (req, res) => {
         nombre: row.producto_nombre,
         categoria: row.categoria,
         cantidad: row.cantidad,
-        precio: row.precio
+        precio: row.precio,
+        imagen_url: row.imagen_url
       });
     });
 

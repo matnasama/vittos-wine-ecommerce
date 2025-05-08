@@ -104,9 +104,7 @@ const Cart = () => {
           <Button variant="contained" color="primary" onClick={() => navigate('/')} sx={{ mt: 2 }}>
             Volver al Inicio
           </Button>
-          <Button variant="outlined" color="secondary" onClick={handleRecoverCart} sx={{ mt: 2, ml: 2 }}>
-            Recuperar carrito anterior
-          </Button>
+
         </Box>
       ) : (
         <Box>

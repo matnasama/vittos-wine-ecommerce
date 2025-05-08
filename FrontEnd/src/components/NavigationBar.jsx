@@ -75,20 +75,43 @@ function NavigationBar({ user, setUser }) {
             gap: 1
           }}
         >            
-          <IconButton color="inherit" href="https://www.facebook.com/" target="_blank">
+          <IconButton 
+            color="inherit" 
+            href="https://www.facebook.com/" 
+            target="_blank"
+            className="zoom-hover"
+          >
             <Facebook />
           </IconButton>
-          <IconButton color="inherit" href="https://www.instagram.com/" target="_blank">
+          <IconButton 
+            color="inherit" 
+            href="https://www.instagram.com/" 
+            target="_blank"
+            className="zoom-hover"
+          >
             <Instagram />
           </IconButton>
-          <IconButton color="inherit" href="mailto:lujanlucasariel@gmail.com">
+          <IconButton 
+            color="inherit" 
+            href="mailto:lujanlucasariel@gmail.com"
+            className="zoom-hover"
+          >
             <Email />
           </IconButton>
-          <IconButton color="inherit" href="https://wa.me/5491164978342" target="_blank">
+          <IconButton 
+            color="inherit" 
+            href="https://wa.me/5491164978342" 
+            target="_blank"
+            className="zoom-hover"
+          >
             <WhatsApp />
           </IconButton>
           
-          <IconButton color="inherit" onClick={() => navigate("/cart")}>
+          <IconButton 
+            color="inherit" 
+            onClick={() => navigate("/cart")}
+            className="zoom-hover"
+          >
             <Badge badgeContent={cartItemCount} color="error">
               <ShoppingCart />
             </Badge>
@@ -99,7 +122,12 @@ function NavigationBar({ user, setUser }) {
               <Button 
                 color="inherit" 
                 onClick={handleMenuClick}
-                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1
+                }}
+                className="zoom-hover"
               >
                 <Avatar 
                   sx={{ 
@@ -142,6 +170,7 @@ function NavigationBar({ user, setUser }) {
                 color="inherit" 
                 onClick={() => navigate("/login")}
                 sx={{ fontWeight: 'bold' }}
+                className="zoom-hover"
               >
                 Iniciar Sesión
               </Button>

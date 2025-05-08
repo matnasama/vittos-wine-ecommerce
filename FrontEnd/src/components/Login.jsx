@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, Typography, Alert, CircularProgress } from '@mui/material';
+import { TextField, Button, Box, Typography, Alert, CircularProgress, Container } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 
@@ -57,80 +57,114 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <Box 
-      component="form"
-      onSubmit={handleLogin}
-      sx={{ 
-        maxWidth: 400, 
-        margin: 'auto', 
-        mt: 4,
-        p: 3,
-        borderRadius: 2,
-        boxShadow: 3,
-        backgroundColor: theme.palette.background.paper
-      }}
-    >
-      <Typography variant="h5" mb={2} textAlign="center">
-        Iniciar sesión
-      </Typography>
-      
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      <TextField
-        fullWidth
-        name="email"
-        label="Email"
-        type="email"
-        value={credentials.email}
-        onChange={handleChange}
-        margin="normal"
-        required
-        disabled={loading}
-      />
-
-      <TextField
-        fullWidth
-        name="password"
-        label="Contraseña"
-        type="password"
-        value={credentials.password}
-        onChange={handleChange}
-        margin="normal"
-        required
-        disabled={loading}
-      />
-
-      <Button 
-        type="submit"
-        variant="contained" 
-        fullWidth 
+    <Container maxWidth="sm">
+      <Box 
+        component="form"
+        onSubmit={handleLogin}
         sx={{ 
-          mt: 2,
-          backgroundColor: '#e4adb0',
-          '&:hover': {
-            backgroundColor: '#d49a9d'
-          },
-          height: '42px'
+          maxWidth: 400, 
+          margin: 'auto', 
+          mt: { xs: 2, sm: 4, md: 8 },
+          p: { xs: 2, sm: 3, md: 4 },
+          borderRadius: 2,
+          boxShadow: 3,
+          backgroundColor: theme.palette.background.paper,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2
         }}
-        disabled={loading}
       >
-        {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
-      </Button>
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          textAlign="center" 
+          sx={{ 
+            mb: 3,
+            fontFamily: 'libre-baskerville-regular',
+            color: '#e4adb0'
+          }}
+        >
+          Iniciar sesión
+        </Typography>
+        
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-      <Button 
-        variant="text" 
-        fullWidth 
-        sx={{ mt: 2 }}
-        onClick={() => navigate('/register')}
-        disabled={loading}
-      >
-        ¿No tenés cuenta? Registrate aquí
-      </Button>
-    </Box>
+        <TextField
+          fullWidth
+          name="email"
+          label="Email"
+          type="email"
+          value={credentials.email}
+          onChange={handleChange}
+          required
+          disabled={loading}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              '&:hover fieldset': {
+                borderColor: '#e4adb0',
+              },
+            },
+          }}
+        />
+
+        <TextField
+          fullWidth
+          name="password"
+          label="Contraseña"
+          type="password"
+          value={credentials.password}
+          onChange={handleChange}
+          required
+          disabled={loading}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              '&:hover fieldset': {
+                borderColor: '#e4adb0',
+              },
+            },
+          }}
+        />
+
+        <Button 
+          type="submit"
+          variant="contained" 
+          fullWidth 
+          sx={{ 
+            mt: 2,
+            backgroundColor: '#e4adb0',
+            '&:hover': {
+              backgroundColor: '#d49a9d'
+            },
+            height: '48px',
+            fontSize: '1.1rem',
+            textTransform: 'none'
+          }}
+          disabled={loading}
+        >
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
+        </Button>
+
+        <Button 
+          variant="text" 
+          fullWidth 
+          sx={{ 
+            mt: 1,
+            color: '#666',
+            '&:hover': {
+              backgroundColor: 'rgba(228, 173, 176, 0.08)'
+            }
+          }}
+          onClick={() => navigate('/register')}
+          disabled={loading}
+        >
+          ¿No tenés cuenta? Registrate aquí
+        </Button>
+      </Box>
+    </Container>
   );
 };
 
