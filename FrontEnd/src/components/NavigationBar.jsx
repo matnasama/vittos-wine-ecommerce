@@ -39,11 +39,13 @@ function NavigationBar({ user, setUser }) {
 
   return (
     <AppBar 
-      position="static" 
+      position="sticky" 
       sx={{ 
         backgroundColor: "#e4adb0",
         width: '100%',
-        boxShadow: 'none'
+        boxShadow: 'none',
+        top: 0,
+        zIndex: 1200
       }}
     >
       <Toolbar 

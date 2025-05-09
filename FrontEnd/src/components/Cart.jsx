@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, IconButton, Button, Paper,
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
-  Snackbar
+  Snackbar, CircularProgress, Modal
 } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -20,6 +20,8 @@ const Cart = () => {
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [openToast, setOpenToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const envio = 3135;
@@ -39,6 +41,8 @@ const Cart = () => {
       return;
     }
   
+    setIsProcessing(true);
+  
     const orden = {
       userId: user.id,
       productos: cart.map(({ id, quantity, price }) => ({ productoId: id, quantity, price })),
@@ -57,17 +61,18 @@ const Cart = () => {
   
       if (!res.ok) throw new Error("Error al registrar la orden");
   
-      setToastMessage("Pedido realizado con éxito");
-      setOpenToast(true);
       clearCart();
-  
+      setShowSuccessModal(true);
+      
       setTimeout(() => {
         navigate("/mis-pedidos");
-      }, 2000);
+      }, 1500);
     } catch (error) {
       console.error("Error al registrar la orden:", error);
       setToastMessage("Hubo un error al procesar tu pedido.");
       setOpenToast(true);
+    } finally {
+      setIsProcessing(false);
     }
   };
  
@@ -100,11 +105,19 @@ const Cart = () => {
 
       {cart.length === 0 ? (
         <Box textAlign="center">
-          <Typography variant="h6" gutterBottom>No hay productos en el carrito.</Typography>
-          <Button variant="contained" color="primary" onClick={() => navigate('/')} sx={{ mt: 2 }}>
-            Volver al Inicio
-          </Button>
-
+          {isProcessing ? (
+            <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+              <CircularProgress />
+              <Typography variant="h6">Procesando tu pedido...</Typography>
+            </Box>
+          ) : (
+            <>
+              <Typography variant="h6" gutterBottom>No hay productos en el carrito.</Typography>
+              <Button variant="contained" color="primary" onClick={() => navigate('/')} sx={{ mt: 2 }}>
+                Volver al Inicio
+              </Button>
+            </>
+          )}
         </Box>
       ) : (
         <Box>
@@ -122,7 +135,7 @@ const Cart = () => {
                 >
                   <Box display="flex" alignItems="center" gap={2}>
                     <img
-                      src={`/products/${item.imagen}`}
+                      src={`/products/optimized/${item.imagen}`}
                       alt={item.nombre}
                       style={{ width: 60, height: 60, objectFit: 'contain', borderRadius: 8 }}
                     />
@@ -165,8 +178,22 @@ const Cart = () => {
               <Typography>Total</Typography>
               <Typography>${total.toFixed(2)}</Typography>
             </Box>
-            <Button variant="contained" color="primary" fullWidth sx={{ mt: 2 }} onClick={onFinalizarCompra}>
-              Finalizar compra
+            <Button 
+              variant="contained" 
+              color="primary" 
+              fullWidth 
+              sx={{ mt: 2 }} 
+              onClick={onFinalizarCompra}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <Box display="flex" alignItems="center" gap={1}>
+                  <CircularProgress size={20} color="inherit" />
+                  Procesando pedido...
+                </Box>
+              ) : (
+                'Finalizar compra'
+              )}
             </Button>
             <Button variant="outlined" color="error" fullWidth sx={{ mt: 1 }} onClick={() => setOpenConfirmDialog(true)}>
               Vaciar carrito
@@ -188,6 +215,40 @@ const Cart = () => {
           <Button onClick={handleClearCart} color="error">Vaciar</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Modal de éxito */}
+      <Modal
+        open={showSuccessModal}
+        onClose={() => {}}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Box
+          sx={{
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            boxShadow: 24,
+            p: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2,
+            maxWidth: 400,
+            width: '90%',
+          }}
+        >
+          <CircularProgress size={40} />
+          <Typography variant="h6" align="center">
+            ¡Pago realizado con éxito!
+          </Typography>
+          <Typography variant="body1" align="center" color="text.secondary">
+            Aguarde un instante mientras procesamos su pedido...
+          </Typography>
+        </Box>
+      </Modal>
 
       {/* Toast notification */}
       <Snackbar

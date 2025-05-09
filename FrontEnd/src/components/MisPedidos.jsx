@@ -1,26 +1,46 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Paper, List, ListItem, ListItemText, Divider } from '@mui/material';
+import { Container, Typography, Paper, List, ListItem, ListItemText, Divider, CircularProgress, Box } from '@mui/material';
 
 const MisPedidos = () => {
   const [pedidos, setPedidos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
 
-    fetch('http://localhost:4000/mis-pedidos', {
+    // Intentar obtener pedidos del localStorage primero
+    const cachedPedidos = localStorage.getItem('misPedidos');
+    if (cachedPedidos) {
+      setPedidos(JSON.parse(cachedPedidos));
+      setLoading(false);
+    }
+
+    fetch('http://localhost:4000/api/mis-pedidos', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
       .then(res => res.json())
-      .then(data => setPedidos(data))
-      .catch(err => console.error('Error al obtener pedidos:', err));
+      .then(data => {
+        setPedidos(data);
+        // Guardar en localStorage
+        localStorage.setItem('misPedidos', JSON.stringify(data));
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error al obtener pedidos:', err);
+        setLoading(false);
+      });
   }, []);
 
   return (
     <Container sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>Mis pedidos</Typography>
-      {pedidos.length === 0 ? (
+      {loading ? (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+          <CircularProgress />
+        </Box>
+      ) : pedidos.length === 0 ? (
         <Typography>No tenés pedidos registrados.</Typography>
       ) : (
         pedidos.map(pedido => (
@@ -32,7 +52,7 @@ const MisPedidos = () => {
               {pedido.productos.map((prod, i) => (
                 <ListItem key={i}>
                   <ListItemText
-                    primary={`${prod.nombre}: ${prod.cantidad} unidades`}
+                    primary={`${prod.nombre}: ${prod.cantidad} ${prod.cantidad === 1 ? 'unidad' : 'unidades'}`}
                     secondary={
                       <>
                         <Typography component="span" variant="body2">

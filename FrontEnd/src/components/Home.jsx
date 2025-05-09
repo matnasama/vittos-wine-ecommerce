@@ -1,10 +1,8 @@
 // src/components/Home.jsx
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
-  Container, Grid, Accordion, AccordionSummary, AccordionDetails,
-  Typography, Snackbar, Box, Modal, Button, CircularProgress
+  Container, Grid, Typography, Snackbar, Box, Modal, Button, CircularProgress, ToggleButton, ToggleButtonGroup
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MuiAlert from '@mui/material/Alert';
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
@@ -14,31 +12,11 @@ import ProductCard from './ProductCard';
 
 const images = ["/img1.jpg", "/img2.jpg", "/img3.jpg", "/img4.jpg", "/img5.jpg"];
 
-// Memoize the grouping function
-const agruparProductosPorMarca = (productos) => {
-  const agrupado = {};
-
-  productos.forEach((producto) => {
-    const marca = producto.categoria;
-    if (!agrupado[marca]) {
-      agrupado[marca] = { brand: marca, variants: [] };
-    }
-    agrupado[marca].variants.push({
-      id: producto.id,
-      type: producto.nombre,
-      price: producto.precio,
-      image: producto.imagen_url,
-    });
-  });
-
-  return Object.values(agrupado);
-};
-
 function Home({ user, setUser }) {
   const [zoomImage, setZoomImage] = useState(null);
   const [openZoomModal, setOpenZoomModal] = useState(false);
   const [openToast, setOpenToast] = useState(false);
-  const [expandedAccordion, setExpandedAccordion] = useState(false);
+  const [selectedBrands, setSelectedBrands] = useState([]);
   const navigate = useNavigate();
 
   const { cart, addToCart } = useCart();
@@ -47,22 +25,49 @@ function Home({ user, setUser }) {
   const handleAddToCart = (variant) => {
     addToCart({
       id: variant.id,
-      nombre: variant.type,
-      price: Number(variant.price),
-      imagen: variant.image,
+      nombre: variant.nombre,
+      price: Number(variant.precio),
+      imagen: variant.imagen_url,
       quantity: 1,
     });
     setOpenToast(true);
-  };
-
-  const handleAccordionChange = (panel) => (event, isExpanded) => {
-    setExpandedAccordion(isExpanded ? panel : false);
   };
 
   const handleZoom = (imageName) => {
     setZoomImage(`/products/${imageName}`);
     setOpenZoomModal(true);
   };
+
+  // Obtener todas las marcas únicas
+  const brands = useMemo(() => {
+    if (!products) return [];
+    const set = new Set(products.map(p => p.categoria));
+    return Array.from(set);
+  }, [products]);
+
+  // Lógica del botón TODO
+  const allSelected = selectedBrands.length === brands.length;
+  const noneSelected = selectedBrands.length === 0;
+
+  const handleBrandToggle = (event, newBrands) => {
+    // Si se hace click en TODO
+    if (newBrands.includes('TODO')) {
+      if (allSelected) {
+        setSelectedBrands([]);
+      } else {
+        setSelectedBrands(brands);
+      }
+      return;
+    }
+    setSelectedBrands(newBrands);
+  };
+
+  // Filtrar productos según las marcas seleccionadas
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    if (selectedBrands.length === 0 || allSelected) return products;
+    return products.filter(p => selectedBrands.includes(p.categoria));
+  }, [products, selectedBrands, allSelected]);
 
   if (isLoading) {
     return (
@@ -80,8 +85,6 @@ function Home({ user, setUser }) {
     );
   }
 
-  const wines = agruparProductosPorMarca(products || []);
-
   return (
     <>
       <Container sx={{ mt: 2 }}>
@@ -98,33 +101,121 @@ function Home({ user, setUser }) {
         </Carousel>
       </Container>
 
-      <Container sx={{ mt: 4 }}>
-        {wines.map((wine, index) => (
-          <Accordion 
-            key={index}
-            expanded={expandedAccordion === `panel${index}`}
-            onChange={handleAccordionChange(`panel${index}`)}
+      {/* Barra de filtros por marca */}
+      <Container sx={{ mt: 4, mb: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            gap: 2,
+            maxWidth: '90%',
+            mx: 'auto',
+            minHeight: 90,
+          }}
+        >
+          <ToggleButtonGroup
+            value={allSelected ? brands : selectedBrands}
+            onChange={handleBrandToggle}
+            aria-label="filtro de marcas"
+            size="large"
+            sx={{
+              flexWrap: 'wrap',
+              width: '100%',
+              gap: 2,
+              justifyContent: 'space-around',
+              alignItems: 'center',
+              minHeight: 90,
+            }}
           >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h5">{wine.brand}</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Grid container spacing={2}>
-                {wine.variants.map((variant, vIndex) => (
-                  <Grid item xs={12} sm={6} md={4} key={vIndex}>
-                    <ProductCard
-                      variant={variant}
-                      onAddToCart={handleAddToCart}
-                      onZoom={handleZoom}
-                      cart={cart}
-                      navigate={navigate}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
-        ))}
+            <ToggleButton
+              value="TODO"
+              aria-label="TODO"
+              selected={allSelected}
+              sx={{
+                borderRadius: 8,
+                fontWeight: 'bold',
+                height: 48,
+                width: 120,
+                color: allSelected ? '#fff' : '#fff',
+                backgroundColor: allSelected ? '#e4adb0' : '#424242',
+                '&.Mui-selected': {
+                  backgroundColor: '#e4adb0',
+                  color: '#fff',
+                },
+                '&:hover': {
+                  backgroundColor: allSelected ? '#e4adb0' : '#424242',
+                  boxShadow: 'none',
+                },
+                '&.Mui-focusVisible': {
+                  outline: 'none',
+                  border: 'none',
+                },
+                boxShadow: 'none',
+                border: 'none',
+                mx: 1,
+                mb: 1,
+                px: 4,
+                fontSize: '1rem',
+              }}
+            >
+              TODO
+            </ToggleButton>
+            {brands.map((brand) => (
+              <ToggleButton
+                key={brand}
+                value={brand}
+                aria-label={brand}
+                sx={{
+                  borderRadius: 2,
+                  fontWeight: 'bold',
+                  height: 56,
+                  width: 135,
+                  color: selectedBrands.includes(brand) || allSelected ? '#fff' : '#fff',
+                  backgroundColor: selectedBrands.includes(brand) || allSelected ? '#e4adb0' : '#424242',
+                  '&.Mui-selected': {
+                    backgroundColor: '#e4adb0',
+                    color: '#fff',
+                  },
+                  '&:hover': {
+                    backgroundColor: selectedBrands.includes(brand) || allSelected ? '#e4adb0' : '#424242',
+                    boxShadow: 'none',
+                  },
+                  '&.Mui-focusVisible': {
+                    outline: 'none',
+                    border: 'none',
+                  },
+                  boxShadow: 'none',
+                  border: 'none',
+                  mx: 1,
+                  mb: 1,
+                  px: 4,
+                  fontSize: '1rem',
+                }}
+              >
+                {brand}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
+      </Container>
+
+      {/* Grid de productos filtrados */}
+      <Container sx={{ mt: 2 }}>
+        <Grid container spacing={2}>
+          {filteredProducts.map((producto) => (
+            <Grid item xs={12} sm={6} md={4} key={producto.id}>
+              <ProductCard
+                variant={producto}
+                onAddToCart={handleAddToCart}
+                onZoom={handleZoom}
+                cart={cart}
+                navigate={navigate}
+              />
+            </Grid>
+          ))}
+        </Grid>
       </Container>
 
       <Container sx={{ mt: 4, textAlign: "center" }}>
