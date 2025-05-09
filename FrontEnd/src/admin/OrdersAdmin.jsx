@@ -18,6 +18,7 @@ import {
 import axios from 'axios';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
+import { config } from '../config';
 
 // Función helper para formatear valores monetarios
 const formatMoney = (value) => {
@@ -52,7 +53,7 @@ export default function OrdersAdmin() {
         throw new Error('No hay token de autenticación');
       }
 
-      const response = await axios.get('http://localhost:4000/api/pedidos', {
+      const response = await axios.get(config.API_ENDPOINTS.PEDIDOS, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -97,7 +98,7 @@ export default function OrdersAdmin() {
       const token = localStorage.getItem('token');
       
       await axios.put(
-        `http://localhost:4000/api/pedidos/${id}`,
+        `${config.API_ENDPOINTS.PEDIDOS}/${id}`,
         { estado: nuevoEstado },
         {
           headers: {

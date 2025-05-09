@@ -29,6 +29,7 @@ import { Edit, Delete, Save, Cancel, Sort, RestartAlt, Add } from '@mui/icons-ma
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
+import { config } from '../config';
 
 export default function UsersAdmin() {
   const [usuarios, setUsuarios] = useState([]);
@@ -46,7 +47,7 @@ export default function UsersAdmin() {
 
   const fetchUsuarios = async () => {
     try {
-      const res = await axios.get('http://localhost:4000/api/usuarios', {
+      const res = await axios.get(config.API_ENDPOINTS.USUARIOS, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setUsuarios(res.data);
@@ -130,9 +131,9 @@ export default function UsersAdmin() {
     try {
       setError('');
       if (isCreating) {
-        await axios.post('http://localhost:4000/api/register', form);
+        await axios.post(config.API_ENDPOINTS.REGISTER, form);
       } else {
-        await axios.put(`http://localhost:4000/api/usuarios/${editandoId}`, form, {
+        await axios.put(`${config.API_ENDPOINTS.USUARIOS}/${editandoId}`, form, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       }
@@ -153,7 +154,7 @@ export default function UsersAdmin() {
   const handleDelete = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar este usuario?')) return;
     try {
-      await axios.delete(`http://localhost:4000/api/usuarios/${id}`, {
+      await axios.delete(`${config.API_ENDPOINTS.USUARIOS}/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       fetchUsuarios();

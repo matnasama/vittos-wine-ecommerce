@@ -1,3 +1,4 @@
+// API Configuration
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 export const config = {
@@ -9,5 +10,13 @@ export const config = {
         PEDIDOS: `${API_URL}/api/pedidos`,
         USUARIOS: `${API_URL}/api/usuarios`,
         MIS_PEDIDOS: `${API_URL}/api/mis-pedidos`,
+        VERIFY_TOKEN: `${API_URL}/api/verify-token`,
+    },
+    TOKEN_KEY: 'vittos_token',
+    USER_KEY: 'vittos_user',
+    TOKEN_EXPIRY: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+    ROLES: {
+        ADMIN: 'admin',
+        USER: 'user'
     }
 }; 

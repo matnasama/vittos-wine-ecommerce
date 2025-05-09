@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import { Delete, Edit, Add, Sort, RestartAlt } from '@mui/icons-material';
 import axios from 'axios';
+import { config } from '../config';
 
 export default function ProductsAdmin() {
   const [products, setProducts] = useState([]);
@@ -20,7 +21,7 @@ export default function ProductsAdmin() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const fetchProducts = () => {
-    axios.get('http://localhost:4000/api/productos')
+    axios.get(config.API_ENDPOINTS.PRODUCTOS)
       .then(res => {
         setProducts(res.data);
         setFilteredProducts(res.data);
@@ -76,7 +77,7 @@ export default function ProductsAdmin() {
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de eliminar este producto?')) {
       try {
-        await axios.delete(`http://localhost:4000/api/productos/${id}`, {
+        await axios.delete(`${config.API_ENDPOINTS.PRODUCTOS}/${id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         fetchProducts();
@@ -96,13 +97,13 @@ export default function ProductsAdmin() {
 
       if (currentProduct.id) {
         await axios.put(
-          `http://localhost:4000/api/productos/${currentProduct.id}`,
+          `${config.API_ENDPOINTS.PRODUCTOS}/${currentProduct.id}`,
           payload,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
       } else {
         await axios.post(
-          'http://localhost:4000/api/productos',
+          config.API_ENDPOINTS.PRODUCTOS,
           payload,
           { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
         );
