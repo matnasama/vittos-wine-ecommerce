@@ -23,8 +23,10 @@ export default defineConfig({
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
           mui: ['@mui/material', '@mui/icons-material'],
+          animation: ['framer-motion']
         }
-      }
+      },
+      external: ['framer-motion']
     }
   },
   resolve: {
