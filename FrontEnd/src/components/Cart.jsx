@@ -33,8 +33,8 @@ const Cart = () => {
   }, [cart]);
 
   const onFinalizarCompra = async () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem(config.USER_KEY));
+    const token = localStorage.getItem(config.TOKEN_KEY);
   
     if (!user || !token) {
       alert("Debes iniciar sesión para finalizar la compra.");
