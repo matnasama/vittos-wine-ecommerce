@@ -12,6 +12,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { useCart } from '../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { config } from '../config';
 
 const Cart = () => {
   const { cart, updateQuantity, removeFromCart, clearCart, setCart } = useCart();
@@ -50,7 +51,7 @@ const Cart = () => {
     };
   
     try {
-      const res = await fetch("http://localhost:4000/api/orden", {
+      const res = await fetch(`${config.API_URL}/api/orden`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

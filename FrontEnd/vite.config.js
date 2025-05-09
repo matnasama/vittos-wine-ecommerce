@@ -22,11 +22,11 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          mui: ['@mui/material', '@mui/icons-material'],
-          animation: ['framer-motion']
+          mui: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+          animation: ['framer-motion'],
+          utils: ['axios', '@tanstack/react-query']
         }
-      },
-      external: ['framer-motion']
+      }
     }
   },
   resolve: {
