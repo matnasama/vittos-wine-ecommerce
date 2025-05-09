@@ -41,10 +41,21 @@ class AuthService {
       });
 
       const { token, user } = response.data;
+      
+      // Asegurarnos de que el rol esté en minúsculas
+      if (user.role) {
+        user.role = user.role.toLowerCase();
+      }
+      
       this.setToken(token);
       this.setUser(user);
+      
+      // Configurar el token por defecto para todas las peticiones
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
       return { token, user };
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   }
@@ -53,10 +64,21 @@ class AuthService {
     try {
       const response = await axios.post(config.API_ENDPOINTS.REGISTER, userData);
       const { token, user } = response.data;
+      
+      // Asegurarnos de que el rol esté en minúsculas
+      if (user.role) {
+        user.role = user.role.toLowerCase();
+      }
+      
       this.setToken(token);
       this.setUser(user);
+      
+      // Configurar el token por defecto para todas las peticiones
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
       return { token, user };
     } catch (error) {
+      console.error('Register error:', error);
       throw error;
     }
   }
@@ -68,8 +90,17 @@ class AuthService {
           Authorization: `Bearer ${this.token}`
         }
       });
+      
+      const { user } = response.data;
+      
+      // Actualizar el usuario en caso de que haya cambios
+      if (user) {
+        this.setUser(user);
+      }
+      
       return response.data;
     } catch (error) {
+      console.error('Token verification error:', error);
       this.logout();
       throw error;
     }
@@ -80,6 +111,7 @@ class AuthService {
     this.user = null;
     localStorage.removeItem(config.TOKEN_KEY);
     localStorage.removeItem(config.USER_KEY);
+    delete axios.defaults.headers.common['Authorization'];
   }
 
   getAuthHeader() {

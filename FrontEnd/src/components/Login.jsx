@@ -12,7 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth';
 
-const Login = () => {
+const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -26,6 +26,10 @@ const Login = () => {
 
     try {
       const { user } = await authService.login(email, password);
+      
+      if (onLogin) {
+        onLogin(user);
+      }
       
       if (user.role === 'admin') {
         navigate('/admin');
