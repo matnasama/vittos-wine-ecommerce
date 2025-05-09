@@ -13,8 +13,6 @@ import ProductCard from './ProductCard';
 const images = ["/img1.jpg", "/img2.jpg", "/img3.jpg", "/img4.jpg", "/img5.jpg"];
 
 function Home({ user, setUser }) {
-  const [zoomImage, setZoomImage] = useState(null);
-  const [openZoomModal, setOpenZoomModal] = useState(false);
   const [openToast, setOpenToast] = useState(false);
   const [selectedBrands, setSelectedBrands] = useState([]);
   const navigate = useNavigate();
@@ -33,11 +31,6 @@ function Home({ user, setUser }) {
     setOpenToast(true);
   };
 
-  const handleZoom = (imageName) => {
-    setZoomImage(`/products/${imageName}`);
-    setOpenZoomModal(true);
-  };
-
   // Obtener todas las marcas únicas
   const brands = useMemo(() => {
     if (!products) return [];
@@ -45,29 +38,16 @@ function Home({ user, setUser }) {
     return Array.from(set);
   }, [products]);
 
-  // Lógica del botón TODO
-  const allSelected = selectedBrands.length === brands.length;
-  const noneSelected = selectedBrands.length === 0;
-
   const handleBrandToggle = (event, newBrands) => {
-    // Si se hace click en TODO
-    if (newBrands.includes('TODO')) {
-      if (allSelected) {
-        setSelectedBrands([]);
-      } else {
-        setSelectedBrands(brands);
-      }
-      return;
-    }
     setSelectedBrands(newBrands);
   };
 
   // Filtrar productos según las marcas seleccionadas
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    if (selectedBrands.length === 0 || allSelected) return products;
+    if (selectedBrands.length === 0) return products;
     return products.filter(p => selectedBrands.includes(p.categoria));
-  }, [products, selectedBrands, allSelected]);
+  }, [products, selectedBrands]);
 
   if (isLoading) {
     return (
@@ -103,83 +83,53 @@ function Home({ user, setUser }) {
 
       {/* Barra de filtros por marca */}
       <Container sx={{ mt: 4, mb: 2 }}>
+        <Typography variant="h5" sx={{ mb: 1, textAlign: 'center', fontWeight: 'bold' }}>
+          Filtrar por marca
+        </Typography>
         <Box
           sx={{
             display: 'flex',
             flexWrap: 'wrap',
             flexDirection: 'row',
-            justifyContent: 'space-around',
-            gap: 2,
-            maxWidth: '90%',
+            justifyContent: 'center',
+            gap: '10px',
+            maxWidth: '100%',
             mx: 'auto',
             minHeight: 90,
           }}
         >
           <ToggleButtonGroup
-            value={allSelected ? brands : selectedBrands}
+            value={selectedBrands}
             onChange={handleBrandToggle}
             aria-label="filtro de marcas"
             size="large"
             sx={{
               flexWrap: 'wrap',
               width: '100%',
-              gap: 2,
-              justifyContent: 'space-around',
+              gap: 1,
+              justifyContent: 'center',
               alignItems: 'center',
               minHeight: 90,
             }}
           >
-            <ToggleButton
-              value="TODO"
-              aria-label="TODO"
-              selected={allSelected}
-              sx={{
-                borderRadius: 8,
-                fontWeight: 'bold',
-                height: 48,
-                width: 120,
-                color: allSelected ? '#fff' : '#fff',
-                backgroundColor: allSelected ? '#e4adb0' : '#424242',
-                '&.Mui-selected': {
-                  backgroundColor: '#e4adb0',
-                  color: '#fff',
-                },
-                '&:hover': {
-                  backgroundColor: allSelected ? '#e4adb0' : '#424242',
-                  boxShadow: 'none',
-                },
-                '&.Mui-focusVisible': {
-                  outline: 'none',
-                  border: 'none',
-                },
-                boxShadow: 'none',
-                border: 'none',
-                mx: 1,
-                mb: 1,
-                px: 4,
-                fontSize: '1rem',
-              }}
-            >
-              TODO
-            </ToggleButton>
             {brands.map((brand) => (
               <ToggleButton
                 key={brand}
                 value={brand}
                 aria-label={brand}
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: 0,
                   fontWeight: 'bold',
-                  height: 56,
-                  width: 135,
-                  color: selectedBrands.includes(brand) || allSelected ? '#fff' : '#fff',
-                  backgroundColor: selectedBrands.includes(brand) || allSelected ? '#e4adb0' : '#424242',
+                  height: 30,
+                  width: 115,
+                  color: selectedBrands.includes(brand) ? '#fff' : '#fff',
+                  backgroundColor: selectedBrands.includes(brand) ? '#e4adb0' : '#424242',
                   '&.Mui-selected': {
                     backgroundColor: '#e4adb0',
                     color: '#fff',
                   },
                   '&:hover': {
-                    backgroundColor: selectedBrands.includes(brand) || allSelected ? '#e4adb0' : '#424242',
+                    backgroundColor: selectedBrands.includes(brand) ? '#e4adb0' : '#424242',
                     boxShadow: 'none',
                   },
                   '&.Mui-focusVisible': {
@@ -188,10 +138,8 @@ function Home({ user, setUser }) {
                   },
                   boxShadow: 'none',
                   border: 'none',
-                  mx: 1,
                   mb: 1,
-                  px: 4,
-                  fontSize: '1rem',
+                  fontSize: '.65rem',
                 }}
               >
                 {brand}
@@ -202,14 +150,46 @@ function Home({ user, setUser }) {
       </Container>
 
       {/* Grid de productos filtrados */}
-      <Container sx={{ mt: 2 }}>
-        <Grid container spacing={2}>
+      <Container sx={{mt: 2}}>
+        <Grid 
+          container 
+          spacing={1} 
+          justifyContent="center"
+          sx={{
+            '& .MuiGrid-item': {
+              minWidth: '280px',
+              maxWidth: '280px',
+              flexBasis: '280px',
+              flexGrow: 0,
+              flexShrink: 0,
+            }
+          }}
+        >
           {filteredProducts.map((producto) => (
-            <Grid item xs={12} sm={6} md={4} key={producto.id}>
+            <Grid 
+              item 
+              key={producto.id}
+              sx={{
+                '@media (max-width: 600px)': {
+                  minWidth: '140px',
+                  maxWidth: '140px',
+                  flexBasis: '140px',
+                },
+                '@media (min-width: 601px) and (max-width: 900px)': {
+                  minWidth: '200px',
+                  maxWidth: '200px',
+                  flexBasis: '200px',
+                },
+                '@media (min-width: 901px)': {
+                  minWidth: '280px',
+                  maxWidth: '280px',
+                  flexBasis: '280px',
+                }
+              }}
+            >
               <ProductCard
                 variant={producto}
                 onAddToCart={handleAddToCart}
-                onZoom={handleZoom}
                 cart={cart}
                 navigate={navigate}
               />
@@ -246,37 +226,6 @@ function Home({ user, setUser }) {
           Producto agregado al carrito
         </MuiAlert>
       </Snackbar>
-
-      {/* Modal de zoom */}
-      <Modal open={openZoomModal} onClose={() => setOpenZoomModal(false)}>
-        <Box 
-          sx={{ 
-            position: "absolute", 
-            top: "50%", 
-            left: "50%", 
-            marginLeft: "-45%",
-            marginTop: "-45%",
-            bgcolor: "background.paper", 
-            p: 2, 
-            borderRadius: 2, 
-            boxShadow: 24,
-            maxWidth: "90vw",
-            maxHeight: "90vh",
-            overflow: "auto",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          {zoomImage && (
-            <img
-              src={zoomImage}
-              alt="Producto ampliado"
-              style={{ maxWidth: "100%", maxHeight: "100%" }}
-            />
-          )}
-        </Box>
-      </Modal>
     </>
   );
 }

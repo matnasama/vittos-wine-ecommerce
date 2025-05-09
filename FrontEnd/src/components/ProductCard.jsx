@@ -18,16 +18,41 @@ const ProductCard = React.memo(({ variant, onAddToCart, cart }) => {
   };
 
   return (
-    <Card sx={{ height: "100%", display: "flex", flexDirection: "column", borderRadius: 2 }}>
+    <Card sx={{ 
+      height: "100%", 
+      display: "flex", 
+      flexDirection: "column", 
+      borderRadius: 2,
+      maxWidth: '230px',
+      mx: 'auto',
+      width: '100%'
+    }}>
       <CardMedia
-        component="img"
-        image={getOptimizedImageUrl(variant.imagen_url)}
-        alt={variant.nombre}
-        height="200"
-        loading="lazy"
-        sx={{ objectFit: "contain", p: 2 }}
-      />
-      <CardContent sx={{ flexGrow: 1 }}>
+        component="div"
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '90%',
+          height: '135px',
+          p: 1,
+          background: 'transparent'
+        }}
+      >
+        <img
+          src={getOptimizedImageUrl(variant.imagen_url)}
+          alt={variant.nombre}
+          style={{
+            maxHeight: '100%',
+            maxWidth: '100%',
+            objectFit: 'contain',
+            display: 'block',
+            margin: 'auto'
+          }}
+          loading="lazy"
+        />
+      </CardMedia>
+      <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
         <Typography variant="h6" gutterBottom>
           {variant.nombre}
         </Typography>
@@ -36,7 +61,7 @@ const ProductCard = React.memo(({ variant, onAddToCart, cart }) => {
         </Typography>
         <Typography variant="body1">${variant.precio}</Typography>
       </CardContent>
-      <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2 }}>
+      <CardActions sx={{ justifyContent: "center", px: 2, pb: 2 }}>
         <Badge badgeContent={cart.find(item => item.id === variant.id)?.quantity || 0} color="error">
           <IconButton onClick={() => onAddToCart(variant)}>
             <AddShoppingCartIcon />
