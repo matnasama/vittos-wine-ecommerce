@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TextField, Button, Box, Typography, Alert, CircularProgress, Container } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
+import { config } from '../config';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -30,7 +31,7 @@ const Register = () => {
     setLoading(true);
     
     try {
-      const res = await fetch('http://localhost:4000/api/register', {
+      const res = await fetch(config.API_ENDPOINTS.REGISTER, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

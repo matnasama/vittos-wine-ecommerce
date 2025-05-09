@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'http://localhost:4000'  // Cambiá al puerto de tu backend
+      '/api': process.env.VITE_API_URL || 'http://localhost:4000'
     }
   }
 })

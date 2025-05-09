@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-
-const API_URL = 'http://localhost:4000/api';
+import { config } from '../config';
 
 // Función para obtener productos
 const fetchProducts = async () => {
-  const response = await fetch(`${API_URL}/productos`);
+  const response = await fetch(config.API_ENDPOINTS.PRODUCTOS);
   if (!response.ok) {
     throw new Error('Error al cargar productos');
   }
@@ -22,7 +21,7 @@ export const useProducts = () => {
 
 // Función para obtener pedidos
 const fetchOrders = async () => {
-  const response = await fetch(`${API_URL}/pedidos`, {
+  const response = await fetch(config.API_ENDPOINTS.PEDIDOS, {
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('token')}`
     }
