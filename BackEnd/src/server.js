@@ -97,6 +97,34 @@ app.delete('/api/usuarios/:id', verificarToken, esAdmin, async (req, res) => {
   }
 });
 
+// 🔐 VERIFICAR TOKEN
+app.get('/api/usuarios/verify-token', verifyToken, async (req, res) => {
+  try {
+    const client = await getConnection();
+    const result = await client.query(
+      'SELECT id, nombre, email, rol FROM usuarios WHERE id = $1',
+      [req.user.id]
+    );
+    
+    const usuario = result.rows[0];
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    res.json({
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        rol: usuario.rol
+      }
+    });
+  } catch (err) {
+    console.error('Error al verificar token:', err);
+    res.status(500).json({ message: 'Error al verificar token' });
+  }
+});
+
 // 🔐 LOGIN
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
@@ -120,9 +148,8 @@ app.post('/api/login', async (req, res) => {
     );
 
     res.json({
-      message: 'Autenticación exitosa',
       token,
-      user: {
+      usuario: {
         id: user.id,
         nombre: user.nombre,
         email: user.email,
@@ -316,35 +343,6 @@ app.put('/api/pedidos/:id', verificarToken, esAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error al actualizar estado del pedido:', error);
     res.status(500).json({ mensaje: 'Error al actualizar estado del pedido' });
-  }
-});
-
-// 🔐 VERIFICAR TOKEN
-app.get('/api/usuarios/verify-token', verificarToken, async (req, res) => {
-  try {
-    const client = await getConnection();
-    const result = await client.query(
-      'SELECT id, nombre, email, rol FROM usuarios WHERE id = $1',
-      [req.usuario.id]
-    );
-    
-    const user = result.rows[0];
-    if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
-    }
-
-    res.json({
-      message: 'Token válido',
-      user: {
-        id: user.id,
-        nombre: user.nombre,
-        email: user.email,
-        rol: user.rol
-      }
-    });
-  } catch (error) {
-    console.error('Error al verificar token:', error);
-    res.status(500).json({ message: 'Error al verificar token' });
   }
 });
 
