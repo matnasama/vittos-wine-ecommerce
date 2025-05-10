@@ -1,36 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Paper, List, ListItem, ListItemText, Divider, CircularProgress, Box } from '@mui/material';
+import axios from 'axios';
+import { config } from '../config';
 
 const MisPedidos = () => {
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-
-    // Intentar obtener pedidos del localStorage primero
-    const cachedPedidos = localStorage.getItem('misPedidos');
-    if (cachedPedidos) {
-      setPedidos(JSON.parse(cachedPedidos));
-      setLoading(false);
-    }
-
-    fetch('http://localhost:4000/api/mis-pedidos', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then(res => res.json())
-      .then(data => {
-        setPedidos(data);
-        // Guardar en localStorage
-        localStorage.setItem('misPedidos', JSON.stringify(data));
-        setLoading(false);
-      })
-      .catch(err => {
+    const fetchPedidos = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await axios.get(config.API_ENDPOINTS.MIS_PEDIDOS);
+        setPedidos(response.data);
+      } catch (err) {
         console.error('Error al obtener pedidos:', err);
+        setError('No se pudieron cargar los pedidos. Por favor, intentá nuevamente.');
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchPedidos();
   }, []);
 
   return (
@@ -40,6 +34,8 @@ const MisPedidos = () => {
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
           <CircularProgress />
         </Box>
+      ) : error ? (
+        <Typography color="error">{error}</Typography>
       ) : pedidos.length === 0 ? (
         <Typography>No tenés pedidos registrados.</Typography>
       ) : (
