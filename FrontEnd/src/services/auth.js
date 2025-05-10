@@ -3,28 +3,54 @@ import { config } from '../config';
 
 class AuthService {
   constructor() {
-    this.token = localStorage.getItem(config.TOKEN_KEY);
-    const storedUser = localStorage.getItem(config.USER_KEY);
-    this.user = storedUser ? JSON.parse(storedUser) : null;
-    
-    // Configurar el token por defecto si existe
-    if (this.token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+    try {
+      this.token = localStorage.getItem(config.TOKEN_KEY) || null;
+      const storedUser = localStorage.getItem(config.USER_KEY);
+      this.user = storedUser ? JSON.parse(storedUser) : null;
+      
+      // Configurar el token por defecto si existe
+      if (this.token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+      }
+    } catch (error) {
+      console.error('Error al inicializar AuthService:', error);
+      this.token = null;
+      this.user = null;
+      localStorage.removeItem(config.TOKEN_KEY);
+      localStorage.removeItem(config.USER_KEY);
     }
   }
 
   setToken(token) {
+    if (!token) {
+      this.token = null;
+      localStorage.removeItem(config.TOKEN_KEY);
+      delete axios.defaults.headers.common['Authorization'];
+      return;
+    }
+    
     this.token = token;
     localStorage.setItem(config.TOKEN_KEY, token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 
   setUser(user) {
-    if (user && user.rol) {
+    if (!user) {
+      this.user = null;
+      localStorage.removeItem(config.USER_KEY);
+      return;
+    }
+
+    if (user.rol) {
       user.rol = user.rol.toLowerCase();
     }
+    
     this.user = user;
-    localStorage.setItem(config.USER_KEY, JSON.stringify(user));
+    try {
+      localStorage.setItem(config.USER_KEY, JSON.stringify(user));
+    } catch (error) {
+      console.error('Error al guardar usuario en localStorage:', error);
+    }
   }
 
   getToken() {
