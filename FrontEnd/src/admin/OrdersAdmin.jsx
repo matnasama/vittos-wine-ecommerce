@@ -40,7 +40,7 @@ const OrdersAdmin = () => {
                 return;
             }
 
-            const response = await axios.get(`${config.API_URL}/api/pedidos`, {
+            const response = await axios.get(`${config.API_ENDPOINTS.ADMIN_PEDIDOS}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json"
@@ -80,7 +80,7 @@ const OrdersAdmin = () => {
         try {
             const token = localStorage.getItem("token");
             await axios.put(
-                `${config.API_URL}/api/pedidos/${pedidoId}`,
+                `${config.API_ENDPOINTS.ADMIN_PEDIDOS}/${pedidoId}`,
                 { estado: nuevoEstado },
                 {
                     headers: {

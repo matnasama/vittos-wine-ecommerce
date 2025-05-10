@@ -38,7 +38,7 @@ const verificarToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, SECRET);
-    req.usuario = decoded;
+    req.user = decoded;
     next();
   } catch (error) {
     return res.status(401).json({ mensaje: 'Token inválido' });
@@ -47,7 +47,7 @@ const verificarToken = (req, res, next) => {
 
 // Middleware para verificar si es admin
 const esAdmin = (req, res, next) => {
-  if (req.usuario.rol !== 'admin') {
+  if (req.user.rol !== 'admin') {
     return res.status(403).json({ mensaje: 'Acceso denegado' });
   }
   next();
@@ -134,7 +134,7 @@ app.get('/api/usuarios/verify-token', verificarToken, async (req, res) => {
     const client = await getConnection();
     const result = await client.query(
       'SELECT id, nombre, email, rol FROM usuarios WHERE id = $1',
-      [req.usuario.id]
+      [req.user.id]
     );
     
     const usuario = result.rows[0];
