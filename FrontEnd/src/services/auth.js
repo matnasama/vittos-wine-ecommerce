@@ -95,10 +95,13 @@ class AuthService {
         throw new Error('Usuario sin rol definido');
       }
 
+      // Asegurarse de que el rol esté en minúsculas
+      usuario.rol = usuario.rol.toLowerCase();
+
       this.setToken(token);
       this.setUser(usuario);
       
-      return { token, usuario };
+      return response.data;
     } catch (error) {
       console.error('Error en login:', error);
       if (error.response) {

@@ -25,13 +25,13 @@ const Login = ({ onLogin }) => {
     setLoading(true);
 
     try {
-      const { user } = await authService.login(email, password);
+      const response = await authService.login(email, password);
       
       if (onLogin) {
-        onLogin(user);
+        onLogin(response.usuario);
       }
       
-      if (user.rol === 'admin') {
+      if (response.usuario.rol === 'admin') {
         navigate('/admin');
       } else {
         navigate('/');
