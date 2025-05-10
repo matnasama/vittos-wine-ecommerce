@@ -16,14 +16,6 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
         setIsLoading(true);
         setError(null);
         
-        const token = localStorage.getItem('token');
-        if (!token) {
-          console.log('No se encontró token');
-          setIsAuthenticated(false);
-          setIsAdmin(false);
-          return;
-        }
-
         const response = await authService.verifyToken();
         console.log('Respuesta del backend:', response);
         

@@ -19,8 +19,8 @@ class AuthService {
   }
 
   setUser(user) {
-    if (user && user.role) {
-      user.role = user.role.toLowerCase();
+    if (user && user.rol) {
+      user.rol = user.rol.toLowerCase();
     }
     this.user = user;
     localStorage.setItem(config.USER_KEY, JSON.stringify(user));
@@ -39,7 +39,7 @@ class AuthService {
   }
 
   isAdmin() {
-    return this.user?.rol?.toLowerCase() === config.ROLES.ADMIN;
+    return this.user?.rol?.toLowerCase() === 'admin';
   }
 
   async login(email, password) {
@@ -49,13 +49,13 @@ class AuthService {
         password
       });
 
-      const { token, user } = response.data;
+      const { token, usuario } = response.data;
       this.setToken(token);
-      this.setUser(user);
+      this.setUser(usuario);
       
-      return { token, user };
+      return { token, usuario };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Error en login:', error);
       this.logout();
       throw error;
     }
@@ -64,20 +64,21 @@ class AuthService {
   async register(userData) {
     try {
       const response = await axios.post(config.API_ENDPOINTS.REGISTER, userData);
-      const { token, user } = response.data;
+      const { token, usuario } = response.data;
       this.setToken(token);
-      this.setUser(user);
+      this.setUser(usuario);
       
-      return { token, user };
+      return { token, usuario };
     } catch (error) {
-      console.error('Register error:', error);
+      console.error('Error en registro:', error);
       this.logout();
       throw error;
     }
   }
 
   async verifyToken() {
-    if (!this.token) {
+    const token = localStorage.getItem(config.TOKEN_KEY);
+    if (!token) {
       console.log('No hay token disponible');
       throw new Error('No token available');
     }
@@ -86,23 +87,21 @@ class AuthService {
       console.log('Enviando petición de verificación al backend...');
       const response = await axios.get(config.API_ENDPOINTS.VERIFY_TOKEN, {
         headers: {
-          Authorization: `Bearer ${this.token}`
+          Authorization: `Bearer ${token}`
         }
       });
       
       console.log('Respuesta del backend:', response.data);
       
-      const { user } = response.data;
-      
-      if (user) {
-        console.log('Usuario encontrado:', user);
-        this.setUser(user);
+      if (response.data && response.data.usuario) {
+        console.log('Usuario encontrado:', response.data.usuario);
+        this.setToken(token);
+        this.setUser(response.data.usuario);
+        return response.data;
       } else {
         console.log('No se encontró información del usuario en la respuesta');
         throw new Error('Invalid user data');
       }
-      
-      return response.data;
     } catch (error) {
       console.error('Error en verificación de token:', error);
       if (error.response?.status === 404) {
