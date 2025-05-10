@@ -39,7 +39,7 @@ class AuthService {
   }
 
   isAdmin() {
-    return this.user?.role?.toLowerCase() === config.ROLES.ADMIN;
+    return this.user?.rol?.toLowerCase() === config.ROLES.ADMIN;
   }
 
   async login(email, password) {
