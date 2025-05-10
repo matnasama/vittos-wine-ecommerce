@@ -8,7 +8,7 @@ import { Facebook, Instagram, Email, WhatsApp, ShoppingCart } from "@mui/icons-m
 import { useState } from 'react';
 import { authService } from '../services/auth';
 
-function NavigationBar({ user, setUser }) {
+function NavigationBar({ user, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { cart } = useCart();
@@ -24,8 +24,7 @@ function NavigationBar({ user, setUser }) {
   };
 
   const handleLogout = () => {
-    authService.logout();
-    setUser(null);
+    onLogout();
     handleMenuClose();
     navigate('/');
   };

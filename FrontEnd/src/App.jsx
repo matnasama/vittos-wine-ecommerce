@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -20,6 +20,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { authService } from './services/auth';
 import axios from 'axios';
 import { config } from './config';
+import { Box, CircularProgress } from '@mui/material';
 
 // Crear una instancia de QueryClient
 const queryClient = new QueryClient({
@@ -62,16 +63,32 @@ const theme = createTheme({
 });
 
 function App() {
-  const [user, setUser] = React.useState(() => {
-    return authService.getUser();
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Configurar el token por defecto si existe
-    const token = authService.getToken();
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
+    const initializeAuth = async () => {
+      try {
+        // Verificar si hay token
+        const token = authService.getToken();
+        if (token) {
+          // Configurar el token en axios
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          
+          // Verificar el token con el backend
+          const response = await authService.verifyToken();
+          setUser(response.user);
+        }
+      } catch (error) {
+        console.error('Error al inicializar autenticación:', error);
+        authService.logout();
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const handleLogin = (userData) => {
@@ -81,7 +98,21 @@ function App() {
   const handleLogout = () => {
     authService.logout();
     setUser(null);
+    delete axios.defaults.headers.common['Authorization'];
   };
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
