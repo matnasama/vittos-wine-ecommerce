@@ -18,6 +18,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import { authService } from '../services/auth';
 
 const drawerWidth = 240; // Reducido ligeramente para optimizar espacio
 
@@ -28,10 +29,19 @@ export default function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (!user || user.rol !== 'admin') {
-      navigate('/');
-    }
+    const checkAdminAccess = async () => {
+      try {
+        const user = authService.getUser();
+        if (!user || user.rol !== 'admin') {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Error al verificar acceso admin:', error);
+        navigate('/');
+      }
+    };
+
+    checkAdminAccess();
   }, [navigate]);
 
   const menu = [
