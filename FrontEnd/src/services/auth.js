@@ -78,29 +78,35 @@ class AuthService {
 
   async verifyToken() {
     if (!this.token) {
+      console.log('No hay token disponible');
       throw new Error('No token available');
     }
 
     try {
+      console.log('Enviando petición de verificación al backend...');
       const response = await axios.get(config.API_ENDPOINTS.VERIFY_TOKEN, {
         headers: {
           Authorization: `Bearer ${this.token}`
         }
       });
       
+      console.log('Respuesta del backend:', response.data);
+      
       const { user } = response.data;
       
       if (user) {
+        console.log('Usuario encontrado:', user);
         this.setUser(user);
       } else {
+        console.log('No se encontró información del usuario en la respuesta');
         throw new Error('Invalid user data');
       }
       
       return response.data;
     } catch (error) {
-      console.error('Token verification error:', error);
+      console.error('Error en verificación de token:', error);
       if (error.response?.status === 404) {
-        console.error('Endpoint not found. Please check the API configuration.');
+        console.error('Endpoint no encontrado. Verificar configuración de API.');
       }
       this.logout();
       throw error;
