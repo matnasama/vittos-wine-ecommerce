@@ -41,6 +41,7 @@ class AuthService {
       return;
     }
 
+    // Asegurarse de que el rol esté en minúsculas
     if (user.rol) {
       user.rol = user.rol.toLowerCase();
     }
