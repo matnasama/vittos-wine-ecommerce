@@ -72,18 +72,41 @@ class AuthService {
 
   async login(email, password) {
     try {
+      console.log('Intentando login con:', { email });
+      
+      // Limpiar headers antes de intentar login
+      delete axios.defaults.headers.common['Authorization'];
+      
       const response = await axios.post(config.API_ENDPOINTS.LOGIN, {
         email,
         password
       });
 
+      console.log('Respuesta del login:', response.data);
+
+      if (!response.data || !response.data.token || !response.data.usuario) {
+        throw new Error('Respuesta inválida del servidor');
+      }
+
       const { token, usuario } = response.data;
+      
+      // Verificar que el usuario tenga un rol válido
+      if (!usuario.rol) {
+        throw new Error('Usuario sin rol definido');
+      }
+
       this.setToken(token);
       this.setUser(usuario);
       
       return { token, usuario };
     } catch (error) {
       console.error('Error en login:', error);
+      if (error.response) {
+        console.error('Detalles del error:', {
+          status: error.response.status,
+          data: error.response.data
+        });
+      }
       this.logout();
       throw error;
     }
