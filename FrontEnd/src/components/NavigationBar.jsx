@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from "../contexts/CartContext";
 import { Facebook, Instagram, Email, WhatsApp, ShoppingCart } from "@mui/icons-material";
 import { useState } from 'react';
+import { authService } from '../services/auth';
 
 function NavigationBar({ user, setUser }) {
   const navigate = useNavigate();
@@ -23,8 +24,7 @@ function NavigationBar({ user, setUser }) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    authService.logout();
     setUser(null);
     handleMenuClose();
     navigate('/');

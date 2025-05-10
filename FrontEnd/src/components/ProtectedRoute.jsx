@@ -29,16 +29,16 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
         const userRole = response.user.rol.toLowerCase();
         console.log('Rol del usuario:', userRole);
         
-        // Actualizar estados de forma síncrona
-        const isUserAdmin = userRole === 'admin';
-        setIsAdmin(isUserAdmin);
-        setIsAuthenticated(true);
-
-        // Si se requiere admin y el usuario no lo es, lanzar error
-        if (requireAdmin && !isUserAdmin) {
+        // Verificar si se requiere admin y el usuario no lo es
+        if (requireAdmin && userRole !== 'admin') {
           console.log('Se requiere admin pero el usuario no lo es');
           throw new Error('Not admin');
         }
+
+        // Si llegamos aquí, el usuario está autenticado y tiene los permisos necesarios
+        console.log('Usuario autenticado y autorizado');
+        setIsAuthenticated(true);
+        setIsAdmin(userRole === 'admin');
         
         console.log('Verificación completada exitosamente');
       } catch (error) {
