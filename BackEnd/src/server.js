@@ -319,6 +319,35 @@ app.put('/api/pedidos/:id', verificarToken, esAdmin, async (req, res) => {
   }
 });
 
+// 🔐 VERIFICAR TOKEN
+app.get('/api/usuarios/verify-token', verificarToken, async (req, res) => {
+  try {
+    const client = await getConnection();
+    const result = await client.query(
+      'SELECT id, nombre, email, rol FROM usuarios WHERE id = $1',
+      [req.usuario.id]
+    );
+    
+    const user = result.rows[0];
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    res.json({
+      message: 'Token válido',
+      user: {
+        id: user.id,
+        nombre: user.nombre,
+        email: user.email,
+        rol: user.rol
+      }
+    });
+  } catch (error) {
+    console.error('Error al verificar token:', error);
+    res.status(500).json({ message: 'Error al verificar token' });
+  }
+});
+
 // 🚀 Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);

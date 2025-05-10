@@ -82,7 +82,11 @@ class AuthService {
     }
 
     try {
-      const response = await axios.get(config.API_ENDPOINTS.VERIFY_TOKEN);
+      const response = await axios.get(config.API_ENDPOINTS.VERIFY_TOKEN, {
+        headers: {
+          Authorization: `Bearer ${this.token}`
+        }
+      });
       
       const { user } = response.data;
       
@@ -95,6 +99,9 @@ class AuthService {
       return response.data;
     } catch (error) {
       console.error('Token verification error:', error);
+      if (error.response?.status === 404) {
+        console.error('Endpoint not found. Please check the API configuration.');
+      }
       this.logout();
       throw error;
     }

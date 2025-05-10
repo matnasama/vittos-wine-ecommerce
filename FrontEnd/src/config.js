@@ -10,7 +10,7 @@ export const config = {
         PEDIDOS: `${API_URL}/api/pedidos`,
         USUARIOS: `${API_URL}/api/usuarios`,
         MIS_PEDIDOS: `${API_URL}/api/mis-pedidos`,
-        VERIFY_TOKEN: `${API_URL}/api/verify-token`,
+        VERIFY_TOKEN: `${API_URL}/api/usuarios/verify-token`,
     },
     TOKEN_KEY: 'vittos_token',
     USER_KEY: 'vittos_user',
