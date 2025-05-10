@@ -98,12 +98,12 @@ app.delete('/api/usuarios/:id', verificarToken, esAdmin, async (req, res) => {
 });
 
 // 🔐 VERIFICAR TOKEN
-app.get('/api/usuarios/verify-token', verifyToken, async (req, res) => {
+app.get('/api/usuarios/verify-token', verificarToken, async (req, res) => {
   try {
     const client = await getConnection();
     const result = await client.query(
       'SELECT id, nombre, email, rol FROM usuarios WHERE id = $1',
-      [req.user.id]
+      [req.usuario.id]
     );
     
     const usuario = result.rows[0];

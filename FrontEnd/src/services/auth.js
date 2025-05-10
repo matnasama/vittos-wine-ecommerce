@@ -4,7 +4,8 @@ import { config } from '../config';
 class AuthService {
   constructor() {
     this.token = localStorage.getItem(config.TOKEN_KEY);
-    this.user = JSON.parse(localStorage.getItem(config.USER_KEY));
+    const storedUser = localStorage.getItem(config.USER_KEY);
+    this.user = storedUser ? JSON.parse(storedUser) : null;
     
     // Configurar el token por defecto si existe
     if (this.token) {
