@@ -21,49 +21,85 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import axios from "axios";
 import { config } from "../config";
+import { useNavigate } from "react-router-dom";
 
 const OrdersAdmin = () => {
     const [pedidos, setPedidos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
     const fetchPedidos = async () => {
         try {
             setLoading(true);
+            const token = localStorage.getItem("token");
+            
+            if (!token) {
+                setError("No hay sesión activa. Por favor, inicie sesión.");
+                navigate("/login");
+                return;
+            }
+
             const response = await axios.get(`${config.API_URL}/api/pedidos`, {
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
                 }
             });
+            
             setPedidos(response.data);
             setError(null);
         } catch (err) {
             console.error("Error al obtener pedidos:", err);
-            setError("Error al cargar los pedidos. Por favor, intente nuevamente.");
+            if (err.response?.status === 403) {
+                setError("No tiene permisos para acceder a esta sección.");
+                navigate("/");
+            } else if (err.response?.status === 401) {
+                setError("Sesión expirada. Por favor, inicie sesión nuevamente.");
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                navigate("/login");
+            } else {
+                setError("Error al cargar los pedidos. Por favor, intente nuevamente.");
+            }
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user || user.rol !== "admin") {
+            navigate("/");
+            return;
+        }
         fetchPedidos();
-    }, []);
+    }, [navigate]);
 
     const handleEstadoChange = async (pedidoId, nuevoEstado) => {
         try {
+            const token = localStorage.getItem("token");
             await axios.put(
                 `${config.API_URL}/api/pedidos/${pedidoId}`,
                 { estado: nuevoEstado },
                 {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json"
                     }
                 }
             );
             await fetchPedidos();
         } catch (err) {
             console.error("Error al actualizar estado:", err);
-            setError("Error al actualizar el estado del pedido.");
+            if (err.response?.status === 401) {
+                setError("Sesión expirada. Por favor, inicie sesión nuevamente.");
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                navigate("/login");
+            } else {
+                setError("Error al actualizar el estado del pedido.");
+            }
         }
     };
 

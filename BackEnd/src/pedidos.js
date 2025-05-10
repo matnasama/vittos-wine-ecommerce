@@ -16,7 +16,7 @@ router.get("/", async (req, res) => {
 });
 
 // Obtener todos los pedidos con detalles (solo admin)
-router.get("/pedidos", verifyToken, verifyAdmin, async (req, res) => {
+router.get("/", verifyToken, verifyAdmin, async (req, res) => {
     try {
         const connection = database.getConnection();
         const result = await connection.query(`
@@ -68,7 +68,7 @@ router.get("/pedidos", verifyToken, verifyAdmin, async (req, res) => {
 });
 
 // Actualizar estado de pedido (solo admin)
-router.put("/pedidos/:id", verifyToken, verifyAdmin, async (req, res) => {
+router.put("/:id", verifyToken, verifyAdmin, async (req, res) => {
     const { id } = req.params;
     const { estado } = req.body;
 

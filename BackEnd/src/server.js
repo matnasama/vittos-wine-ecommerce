@@ -26,8 +26,8 @@ app.use(express.json());
 
 // 📦 Rutas
 app.use('/api/productos', productosRouter);
-app.use('/api', pedidosRouter);
-app.use('/api', usuariosRouter);
+app.use('/api/pedidos', pedidosRouter);
+app.use('/api/usuarios', usuariosRouter);
 
 // Middleware para verificar token
 const verificarToken = (req, res, next) => {
