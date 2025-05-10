@@ -1,248 +1,184 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  Paper,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  MenuItem,
-  Select,
-  Box,
-  CircularProgress,
-  Alert,
-  Button,
-  Avatar,
-  ListItemAvatar
-} from '@mui/material';
-import axios from 'axios';
-import { useTheme } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
-import { config } from '../config';
+    Box,
+    Typography,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Button,
+    CircularProgress,
+    Alert,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel
+} from "@mui/material";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import axios from "axios";
+import { config } from "../config";
 
-// Función helper para formatear valores monetarios
-const formatMoney = (value) => {
-  const num = Number(value);
-  return isNaN(num) ? '0.00' : num.toFixed(2);
+const OrdersAdmin = () => {
+    const [pedidos, setPedidos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const fetchPedidos = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`${config.API_URL}/api/pedidos`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                }
+            });
+            setPedidos(response.data);
+            setError(null);
+        } catch (err) {
+            console.error("Error al obtener pedidos:", err);
+            setError("Error al cargar los pedidos. Por favor, intente nuevamente.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPedidos();
+    }, []);
+
+    const handleEstadoChange = async (pedidoId, nuevoEstado) => {
+        try {
+            await axios.put(
+                `${config.API_URL}/api/pedidos/${pedidoId}`,
+                { estado: nuevoEstado },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`
+                    }
+                }
+            );
+            await fetchPedidos();
+        } catch (err) {
+            console.error("Error al actualizar estado:", err);
+            setError("Error al actualizar el estado del pedido.");
+        }
+    };
+
+    const formatDate = (dateString) => {
+        return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy 'a las' HH:mm", {
+            locale: es
+        });
+    };
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat("es-AR", {
+            style: "currency",
+            currency: "ARS"
+        }).format(amount);
+    };
+
+    if (loading) {
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    if (error) {
+        return (
+            <Box p={3}>
+                <Alert severity="error">{error}</Alert>
+            </Box>
+        );
+    }
+
+    return (
+        <Box p={3}>
+            <Typography variant="h4" gutterBottom>
+                Gestión de Pedidos
+            </Typography>
+            <TableContainer component={Paper}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>ID</TableCell>
+                            <TableCell>Fecha</TableCell>
+                            <TableCell>Cliente</TableCell>
+                            <TableCell>Productos</TableCell>
+                            <TableCell>Total</TableCell>
+                            <TableCell>Estado</TableCell>
+                            <TableCell>Acciones</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {pedidos.map((pedido) => (
+                            <TableRow key={pedido.id}>
+                                <TableCell>{pedido.id}</TableCell>
+                                <TableCell>{formatDate(pedido.fecha)}</TableCell>
+                                <TableCell>
+                                    <Typography variant="body2">
+                                        {pedido.usuario_nombre}
+                                    </Typography>
+                                    <Typography variant="body2" color="textSecondary">
+                                        {pedido.usuario_email}
+                                    </Typography>
+                                    <Typography variant="body2" color="textSecondary">
+                                        {pedido.usuario_telefono}
+                                    </Typography>
+                                    <Typography variant="body2" color="textSecondary">
+                                        {pedido.usuario_direccion}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    {pedido.productos.map((producto) => (
+                                        <Box key={producto.id} mb={1}>
+                                            <Typography variant="body2">
+                                                {producto.nombre} x {producto.cantidad}
+                                            </Typography>
+                                            <Typography variant="body2" color="textSecondary">
+                                                {formatCurrency(producto.precio)} c/u
+                                            </Typography>
+                                        </Box>
+                                    ))}
+                                </TableCell>
+                                <TableCell>{formatCurrency(pedido.total)}</TableCell>
+                                <TableCell>
+                                    <FormControl fullWidth size="small">
+                                        <Select
+                                            value={pedido.estado}
+                                            onChange={(e) =>
+                                                handleEstadoChange(pedido.id, e.target.value)
+                                            }
+                                        >
+                                            <MenuItem value="pendiente">Pendiente</MenuItem>
+                                            <MenuItem value="confirmado">Confirmado</MenuItem>
+                                            <MenuItem value="en_preparacion">En Preparación</MenuItem>
+                                            <MenuItem value="enviado">Enviado</MenuItem>
+                                            <MenuItem value="entregado">Entregado</MenuItem>
+                                            <MenuItem value="cancelado">Cancelado</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </TableCell>
+                                <TableCell>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        onClick={() => handleEstadoChange(pedido.id, "entregado")}
+                                    >
+                                        Marcar como Entregado
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </Box>
+    );
 };
 
-export default function OrdersAdmin() {
-  const [pedidos, setPedidos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const theme = useTheme();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (!user || user.rol !== 'admin') {
-      navigate('/');
-      return;
-    }
-    
-    fetchPedidos();
-  }, [navigate]);
-
-  const fetchPedidos = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await axios.get(config.API_ENDPOINTS.ADMIN_PEDIDOS);
-      
-      // Asegurarnos que los valores numéricos están correctamente formateados
-      const pedidosFormateados = response.data.map(pedido => ({
-        ...pedido,
-        total: formatMoney(pedido.total),
-        productos: pedido.productos.map(prod => ({
-          ...prod,
-          precio: formatMoney(prod.precio)
-        }))
-      }));
-      
-      setPedidos(pedidosFormateados);
-    } catch (err) {
-      console.error('Error completo:', err);
-      
-      let errorMessage = 'Error al cargar los pedidos';
-      if (err.response) {
-        if (err.response.status === 401 || err.response.status === 403) {
-          errorMessage = 'Acceso denegado. Por favor, inicie sesión nuevamente.';
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
-        } else {
-          errorMessage = err.response.data?.message || errorMessage;
-        }
-      }
-      
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const actualizarEstado = async (id, nuevoEstado) => {
-    try {
-      setError(null);
-      
-      await axios.put(
-        `${config.API_ENDPOINTS.ADMIN_PEDIDOS}/${id}`,
-        { estado: nuevoEstado }
-      );
-      
-      setPedidos(prev =>
-        prev.map(p => p.id === id ? { ...p, estado: nuevoEstado } : p)
-      );
-    } catch (err) {
-      console.error('Error al actualizar estado:', err);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-      }
-      setError(err.response?.data?.message || 'Error al actualizar el estado');
-    }
-  };
-
-  const estadosPosibles = [
-    { value: 'pendiente', label: 'Pendiente', color: 'warning.main' },
-    { value: 'enviado', label: 'Enviado', color: 'primary.main' },
-    { value: 'entregado', label: 'Entregado', color: 'success.main' },
-    { value: 'cancelado', label: 'Cancelado', color: 'error.main' }
-  ];
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ mt: 2 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-        <Button 
-          variant="contained" 
-          onClick={fetchPedidos}
-          sx={{ 
-            backgroundColor: '#e4adb0', 
-            '&:hover': { backgroundColor: '#d49a9d' } 
-          }}
-        >
-          Reintentar
-        </Button>
-      </Box>
-    );
-  }
-
-  return (
-    <Box>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-        Gestión de Pedidos
-      </Typography>
-
-      {pedidos.length === 0 ? (
-        <Typography>No hay pedidos registrados.</Typography>
-      ) : (
-        pedidos.map(pedido => (
-          <Paper 
-            key={pedido.id} 
-            sx={{ 
-              p: 3, 
-              mb: 3, 
-              borderRadius: 2,
-              boxShadow: theme.shadows[2]
-            }}
-          >
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2
-            }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                Pedido #{pedido.id}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {new Date(pedido.fecha).toLocaleString()}
-              </Typography>
-            </Box>
-
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="body1">
-                <strong>Cliente:</strong> {pedido.usuario_nombre || pedido.usuario_email}
-              </Typography>
-              <Typography variant="body1">
-                <strong>Email:</strong> {pedido.usuario_email}
-              </Typography>
-              <Typography variant="body1">
-                <strong>Total:</strong> ${pedido.total}
-              </Typography>
-            </Box>
-
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Estado actual:
-              </Typography>
-              <Select
-                value={pedido.estado}
-                onChange={(e) => actualizarEstado(pedido.id, e.target.value)}
-                fullWidth
-                size="small"
-                sx={{
-                  '& .MuiSelect-select': {
-                    color: theme.palette[estadosPosibles.find(e => e.value === pedido.estado)?.color || 'text.primary']
-                  }
-                }}
-              >
-                {estadosPosibles.map((estado) => (
-                  <MenuItem 
-                    key={estado.value} 
-                    value={estado.value}
-                    sx={{ color: theme.palette[estado.color] }}
-                  >
-                    {estado.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Typography variant="subtitle1" gutterBottom>
-              Productos:
-            </Typography>
-            <List>
-              {pedido.productos.map((producto, index) => (
-                <ListItem key={index}>
-                  <ListItemAvatar>
-                    <Avatar src={producto.imagen} alt={producto.nombre} />
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={producto.nombre}
-                    secondary={
-                      <>
-                        <Typography component="span" variant="body2">
-                          Cantidad: {producto.cantidad}
-                        </Typography>
-                        <br />
-                        <Typography component="span" variant="body2">
-                          Precio unitario: ${producto.precio}
-                        </Typography>
-                      </>
-                    }
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        ))
-      )}
-    </Box>
-  );
-}
+export default OrdersAdmin;
