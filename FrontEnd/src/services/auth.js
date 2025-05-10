@@ -5,11 +5,17 @@ class AuthService {
   constructor() {
     this.token = localStorage.getItem(config.TOKEN_KEY);
     this.user = JSON.parse(localStorage.getItem(config.USER_KEY));
+    
+    // Configurar el token por defecto si existe
+    if (this.token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+    }
   }
 
   setToken(token) {
     this.token = token;
     localStorage.setItem(config.TOKEN_KEY, token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 
   setUser(user) {
@@ -26,11 +32,11 @@ class AuthService {
   }
 
   isAuthenticated() {
-    return !!this.token;
+    return !!this.token && !!this.user;
   }
 
   isAdmin() {
-    return this.user?.role === config.ROLES.ADMIN;
+    return this.user?.role?.toLowerCase() === config.ROLES.ADMIN;
   }
 
   async login(email, password) {
@@ -42,7 +48,6 @@ class AuthService {
 
       const { token, user } = response.data;
       
-      // Asegurarnos de que el rol esté en minúsculas
       if (user.role) {
         user.role = user.role.toLowerCase();
       }
@@ -50,12 +55,10 @@ class AuthService {
       this.setToken(token);
       this.setUser(user);
       
-      // Configurar el token por defecto para todas las peticiones
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
       return { token, user };
     } catch (error) {
       console.error('Login error:', error);
+      this.logout();
       throw error;
     }
   }
@@ -65,7 +68,6 @@ class AuthService {
       const response = await axios.post(config.API_ENDPOINTS.REGISTER, userData);
       const { token, user } = response.data;
       
-      // Asegurarnos de que el rol esté en minúsculas
       if (user.role) {
         user.role = user.role.toLowerCase();
       }
@@ -73,28 +75,28 @@ class AuthService {
       this.setToken(token);
       this.setUser(user);
       
-      // Configurar el token por defecto para todas las peticiones
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
       return { token, user };
     } catch (error) {
       console.error('Register error:', error);
+      this.logout();
       throw error;
     }
   }
 
   async verifyToken() {
+    if (!this.token) {
+      throw new Error('No token available');
+    }
+
     try {
-      const response = await axios.get(config.API_ENDPOINTS.VERIFY_TOKEN, {
-        headers: {
-          Authorization: `Bearer ${this.token}`
-        }
-      });
+      const response = await axios.get(config.API_ENDPOINTS.VERIFY_TOKEN);
       
       const { user } = response.data;
       
-      // Actualizar el usuario en caso de que haya cambios
       if (user) {
+        if (user.role) {
+          user.role = user.role.toLowerCase();
+        }
         this.setUser(user);
       }
       
@@ -115,9 +117,9 @@ class AuthService {
   }
 
   getAuthHeader() {
-    return {
+    return this.token ? {
       Authorization: `Bearer ${this.token}`
-    };
+    } : {};
   }
 }
 

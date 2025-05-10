@@ -136,7 +136,7 @@ const Cart = () => {
                 >
                   <Box display="flex" alignItems="center" gap={2}>
                     <img
-                      src={`/products/optimized/${item.imagen}`}
+                      src={`${config.API_URL}/products/optimized/${item.imagen}`}
                       alt={item.nombre}
                       style={{ width: 60, height: 60, objectFit: 'contain', borderRadius: 8 }}
                     />

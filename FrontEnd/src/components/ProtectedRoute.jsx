@@ -12,15 +12,17 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   useEffect(() => {
     const verifyAuth = async () => {
       try {
+        // Verificar si hay token y usuario
         if (!authService.isAuthenticated()) {
           throw new Error('No authenticated');
         }
 
+        // Verificar si es admin si se requiere
         if (requireAdmin && !authService.isAdmin()) {
           throw new Error('Not admin');
         }
 
-        // Verify token with backend
+        // Verificar token con el backend
         await authService.verifyToken();
         
         setIsAuthenticated(true);
@@ -28,6 +30,8 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
       } catch (error) {
         console.error('Auth verification failed:', error);
         authService.logout();
+        setIsAuthenticated(false);
+        setIsAdmin(false);
       } finally {
         setLoading(false);
       }
@@ -50,7 +54,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   if (requireAdmin && !isAdmin) {

@@ -19,6 +19,7 @@ import { CartProvider } from './contexts/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { authService } from './services/auth';
 import axios from 'axios';
+import { config } from './config';
 
 // Crear una instancia de QueryClient
 const queryClient = new QueryClient({
@@ -62,13 +63,12 @@ const theme = createTheme({
 
 function App() {
   const [user, setUser] = React.useState(() => {
-    const savedUser = localStorage.getItem('vittos_user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    return authService.getUser();
   });
 
   useEffect(() => {
     // Configurar el token por defecto si existe
-    const token = localStorage.getItem('vittos_token');
+    const token = authService.getToken();
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
