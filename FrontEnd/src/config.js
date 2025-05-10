@@ -13,9 +13,9 @@ export const config = {
         VERIFY_TOKEN: `${API_URL}/api/usuarios/verify-token`,
         // Endpoints del panel de administrador
         ADMIN_STATS: `${API_URL}/api/admin/stats`,
-        ADMIN_PRODUCTOS: `${API_URL}/api/admin/productos`,
-        ADMIN_PEDIDOS: `${API_URL}/api/admin/pedidos`,
-        ADMIN_USUARIOS: `${API_URL}/api/admin/usuarios`,
+        ADMIN_PRODUCTOS: `${API_URL}/api/productos`,
+        ADMIN_PEDIDOS: `${API_URL}/api/pedidos`,
+        ADMIN_USUARIOS: `${API_URL}/api/usuarios`,
     },
     TOKEN_KEY: 'vittos_token',
     USER_KEY: 'vittos_user',
