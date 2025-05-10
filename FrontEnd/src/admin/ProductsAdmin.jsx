@@ -16,17 +16,25 @@ export default function ProductsAdmin() {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const fetchProducts = () => {
-    axios.get(config.API_ENDPOINTS.PRODUCTOS)
-      .then(res => {
-        setProducts(res.data);
-        setFilteredProducts(res.data);
-      })
-      .catch(err => console.error('Error al cargar productos', err));
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axios.get(config.API_ENDPOINTS.ADMIN_PRODUCTOS);
+      setProducts(response.data);
+      setFilteredProducts(response.data);
+    } catch (err) {
+      console.error('Error al cargar productos:', err);
+      setError('No se pudieron cargar los productos');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -77,12 +85,11 @@ export default function ProductsAdmin() {
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de eliminar este producto?')) {
       try {
-        await axios.delete(`${config.API_ENDPOINTS.PRODUCTOS}/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        await axios.delete(`${config.API_ENDPOINTS.ADMIN_PRODUCTOS}/${id}`);
         fetchProducts();
       } catch (err) {
         console.error('Error al eliminar producto:', err);
+        setError('No se pudo eliminar el producto');
       }
     }
   };
@@ -97,23 +104,50 @@ export default function ProductsAdmin() {
 
       if (currentProduct.id) {
         await axios.put(
-          `${config.API_ENDPOINTS.PRODUCTOS}/${currentProduct.id}`,
-          payload,
-          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+          `${config.API_ENDPOINTS.ADMIN_PRODUCTOS}/${currentProduct.id}`,
+          payload
         );
       } else {
         await axios.post(
-          config.API_ENDPOINTS.PRODUCTOS,
-          payload,
-          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+          config.API_ENDPOINTS.ADMIN_PRODUCTOS,
+          payload
         );
       }
       setOpenModal(false);
       fetchProducts();
     } catch (err) {
       console.error('Error al guardar producto:', err);
+      setError('No se pudo guardar el producto');
     }
   };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ mt: 2 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <Button 
+          variant="contained" 
+          onClick={fetchProducts}
+          sx={{ 
+            backgroundColor: '#e4adb0', 
+            '&:hover': { backgroundColor: '#d49a9d' } 
+          }}
+        >
+          Reintentar
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ maxWidth: '100%', overflowX: 'hidden' }}>
@@ -198,47 +232,24 @@ export default function ProductsAdmin() {
                 <Typography gutterBottom variant="h5" component="div">
                   {product.nombre}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  Marca: {product.categoria}
+                <Typography variant="body2" color="text.secondary">
+                  {product.descripcion}
                 </Typography>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    ${product.precio}
-                  </Typography>
-                  <Typography variant="body2">
-                    Stock: {product.stock}
-                  </Typography>
-                </Box>
-                {product.imagen && (
-                  <Box sx={{ mt: 2, textAlign: 'center' }}>
-                    <img
-                      src={product.imagen}
-                      alt={product.nombre}
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: 150,
-                        borderRadius: 4
-                      }}
-                    />
-                  </Box>
-                )}
+                <Typography variant="h6" color="primary" sx={{ mt: 2 }}>
+                  ${product.precio}
+                </Typography>
+                <Typography variant="body2">
+                  Stock: {product.stock}
+                </Typography>
+                <Typography variant="body2">
+                  Categoría: {product.categoria}
+                </Typography>
               </CardContent>
-              <Box sx={{
-                p: 2,
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: 1
-              }}>
-                <IconButton
-                  onClick={() => handleEdit(product)}
-                  sx={{ color: theme.palette.primary.main }}
-                >
+              <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                <IconButton onClick={() => handleEdit(product)} color="primary">
                   <Edit />
                 </IconButton>
-                <IconButton
-                  onClick={() => handleDelete(product.id)}
-                  sx={{ color: theme.palette.error.main }}
-                >
+                <IconButton onClick={() => handleDelete(product.id)} color="error">
                   <Delete />
                 </IconButton>
               </Box>
@@ -247,13 +258,12 @@ export default function ProductsAdmin() {
         ))}
       </Grid>
 
-      {/* Modal para editar/crear */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="sm">
+      <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {currentProduct?.id ? 'Editar Producto' : 'Agregar Producto'}
+          {currentProduct?.id ? 'Editar Producto' : 'Nuevo Producto'}
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
             <TextField
               label="Nombre"
               value={currentProduct?.nombre || ''}
@@ -268,24 +278,22 @@ export default function ProductsAdmin() {
               multiline
               rows={3}
             />
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                label="Precio"
-                type="number"
-                value={currentProduct?.precio || ''}
-                onChange={(e) => setCurrentProduct({ ...currentProduct, precio: e.target.value })}
-                fullWidth
-              />
-              <TextField
-                label="Stock"
-                type="number"
-                value={currentProduct?.stock || ''}
-                onChange={(e) => setCurrentProduct({ ...currentProduct, stock: e.target.value })}
-                fullWidth
-              />
-            </Box>
             <TextField
-              label="Marca (Categoría)"
+              label="Precio"
+              type="number"
+              value={currentProduct?.precio || ''}
+              onChange={(e) => setCurrentProduct({ ...currentProduct, precio: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Stock"
+              type="number"
+              value={currentProduct?.stock || ''}
+              onChange={(e) => setCurrentProduct({ ...currentProduct, stock: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Categoría"
               value={currentProduct?.categoria || ''}
               onChange={(e) => setCurrentProduct({ ...currentProduct, categoria: e.target.value })}
               fullWidth
@@ -300,7 +308,14 @@ export default function ProductsAdmin() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenModal(false)}>Cancelar</Button>
-          <Button onClick={handleSave} variant="contained">
+          <Button 
+            onClick={handleSave}
+            variant="contained"
+            sx={{
+              backgroundColor: '#e4adb0',
+              '&:hover': { backgroundColor: '#d49a9d' }
+            }}
+          >
             Guardar
           </Button>
         </DialogActions>

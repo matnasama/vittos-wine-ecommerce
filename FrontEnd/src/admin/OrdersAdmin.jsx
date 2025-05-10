@@ -48,17 +48,7 @@ export default function OrdersAdmin() {
       setLoading(true);
       setError(null);
       
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No hay token de autenticación');
-      }
-
-      const response = await axios.get(config.API_ENDPOINTS.PEDIDOS, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axios.get(config.API_ENDPOINTS.ADMIN_PEDIDOS);
       
       // Asegurarnos que los valores numéricos están correctamente formateados
       const pedidosFormateados = response.data.map(pedido => ({
@@ -95,17 +85,10 @@ export default function OrdersAdmin() {
   const actualizarEstado = async (id, nuevoEstado) => {
     try {
       setError(null);
-      const token = localStorage.getItem('token');
       
       await axios.put(
-        `${config.API_ENDPOINTS.PEDIDOS}/${id}`,
-        { estado: nuevoEstado },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        `${config.API_ENDPOINTS.ADMIN_PEDIDOS}/${id}`,
+        { estado: nuevoEstado }
       );
       
       setPedidos(prev =>
@@ -198,38 +181,30 @@ export default function OrdersAdmin() {
                 <strong>Email:</strong> {pedido.usuario_email}
               </Typography>
               <Typography variant="body1">
-                <strong>Dirección:</strong> {pedido.usuario_direccion || 'No registrada'}
-              </Typography>
-              <Typography variant="body1">
-                <strong>Teléfono:</strong> {pedido.usuario_telefono || 'No registrado'}
+                <strong>Total:</strong> ${pedido.total}
               </Typography>
             </Box>
 
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              mb: 3,
-              gap: 2
-            }}>
-              <Typography variant="body1">
-                <strong>Estado:</strong>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Estado actual:
               </Typography>
               <Select
-                value={pedido.estado || 'pendiente'}
+                value={pedido.estado}
                 onChange={(e) => actualizarEstado(pedido.id, e.target.value)}
+                fullWidth
                 size="small"
-                sx={{ 
-                  minWidth: 150,
-                  backgroundColor: estadosPosibles.find(e => e.value === pedido.estado)?.color ?
-                    `${theme.palette[estadosPosibles.find(e => e.value === pedido.estado).color.split('.')[0]].light}30` : 'inherit',
-                  color: estadosPosibles.find(e => e.value === pedido.estado)?.color || 'inherit'
+                sx={{
+                  '& .MuiSelect-select': {
+                    color: theme.palette[estadosPosibles.find(e => e.value === pedido.estado)?.color || 'text.primary']
+                  }
                 }}
               >
-                {estadosPosibles.map(estado => (
+                {estadosPosibles.map((estado) => (
                   <MenuItem 
                     key={estado.value} 
                     value={estado.value}
-                    sx={{ color: estado.color }}
+                    sx={{ color: theme.palette[estado.color] }}
                   >
                     {estado.label}
                   </MenuItem>
@@ -237,43 +212,34 @@ export default function OrdersAdmin() {
               </Select>
             </Box>
 
-            <List dense sx={{ mb: 2 }}>
-              {pedido.productos.map((prod, i) => (
-                <ListItem key={i} sx={{ py: 1 }}>
+            <Divider sx={{ my: 2 }} />
+
+            <Typography variant="subtitle1" gutterBottom>
+              Productos:
+            </Typography>
+            <List>
+              {pedido.productos.map((producto, index) => (
+                <ListItem key={index}>
                   <ListItemAvatar>
-                    <Avatar 
-                      src={prod.imagen_url} 
-                      alt={prod.nombre}
-                      variant="rounded"
-                      sx={{ width: 56, height: 56, mr: 2 }}
-                    />
+                    <Avatar src={producto.imagen} alt={producto.nombre} />
                   </ListItemAvatar>
                   <ListItemText
-                    primary={`${prod.categoria} ${prod.nombre}`}
-                    secondary={`${prod.cantidad} x $${formatMoney(prod.precio)}`}
-                    sx={{ flex: '1 1 auto' }}
+                    primary={producto.nombre}
+                    secondary={
+                      <>
+                        <Typography component="span" variant="body2">
+                          Cantidad: {producto.cantidad}
+                        </Typography>
+                        <br />
+                        <Typography component="span" variant="body2">
+                          Precio unitario: ${producto.precio}
+                        </Typography>
+                      </>
+                    }
                   />
-                  <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                    ${formatMoney(prod.cantidad * prod.precio)}
-                  </Typography>
                 </ListItem>
               ))}
             </List>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <Typography variant="body2" color="text.secondary">
-                {pedido.productos.length} producto{pedido.productos.length !== 1 ? 's' : ''}
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                Total: ${formatMoney(pedido.total)}
-              </Typography>
-            </Box>
           </Paper>
         ))
       )}

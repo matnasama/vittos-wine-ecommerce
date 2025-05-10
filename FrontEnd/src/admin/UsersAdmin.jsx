@@ -23,7 +23,8 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import { Edit, Delete, Save, Cancel, Sort, RestartAlt, Add } from '@mui/icons-material';
 import axios from 'axios';
@@ -41,24 +42,28 @@ export default function UsersAdmin() {
   const [openModal, setOpenModal] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
   
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const fetchUsuarios = async () => {
     try {
-      const res = await axios.get(config.API_ENDPOINTS.USUARIOS, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      setLoading(true);
+      setError('');
+      const res = await axios.get(config.API_ENDPOINTS.ADMIN_USUARIOS);
       setUsuarios(res.data);
       setFilteredUsuarios(res.data);
     } catch (err) {
       console.error('Error al obtener usuarios:', err);
+      setError('No se pudieron cargar los usuarios');
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -102,9 +107,7 @@ export default function UsersAdmin() {
       nombre: '',
       email: '',
       password: '',
-      rol: 'cliente',
-      telefono: '',
-      direccion: ''
+      rol: 'cliente'
     });
     setOpenModal(true);
   };
@@ -131,11 +134,9 @@ export default function UsersAdmin() {
     try {
       setError('');
       if (isCreating) {
-        await axios.post(config.API_ENDPOINTS.REGISTER, form);
+        await axios.post(config.API_ENDPOINTS.ADMIN_USUARIOS, form);
       } else {
-        await axios.put(`${config.API_ENDPOINTS.USUARIOS}/${editandoId}`, form, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        await axios.put(`${config.API_ENDPOINTS.ADMIN_USUARIOS}/${editandoId}`, form);
       }
       setEditandoId(null);
       setOpenModal(false);
@@ -143,30 +144,27 @@ export default function UsersAdmin() {
     } catch (err) {
       console.error('Error al guardar usuario:', err);
       setError(err.response?.data?.message || 'Error al guardar usuario');
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-      }
     }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar este usuario?')) return;
     try {
-      await axios.delete(`${config.API_ENDPOINTS.USUARIOS}/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await axios.delete(`${config.API_ENDPOINTS.ADMIN_USUARIOS}/${id}`);
       fetchUsuarios();
     } catch (err) {
       console.error('Error al eliminar usuario:', err);
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-      }
+      setError('No se pudo eliminar el usuario');
     }
   };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ maxWidth: '100%', overflowX: 'hidden' }}>
@@ -182,6 +180,19 @@ export default function UsersAdmin() {
           alignItems: 'center',
           mt: 2
         }}>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={handleCreate}
+            sx={{
+              backgroundColor: '#e4adb0',
+              '&:hover': { backgroundColor: '#d49a9d' },
+              whiteSpace: 'nowrap'
+            }}
+          >
+            AGREGAR USUARIO
+          </Button>
+
           <TextField
             label="Buscar por nombre o email..."
             value={search}
@@ -221,113 +232,54 @@ export default function UsersAdmin() {
           >
             Resetear filtros
           </Button>
-
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={handleCreate}
-            sx={{
-              backgroundColor: '#e4adb0',
-              '&:hover': {
-                backgroundColor: '#d49a9d'
-              },
-              whiteSpace: 'nowrap'
-            }}
-          >
-            Crear Usuario
-          </Button>
         </Box>
       </Box>
 
-      {/* Vista de escritorio - Tabla */}
-      {!isMobile && (
-        <TableContainer component={Paper}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Nombre</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Rol</TableCell>
-                <TableCell>Teléfono</TableCell>
-                <TableCell>Dirección</TableCell>
-                <TableCell align="right">Acciones</TableCell>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Tabla de usuarios */}
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>ID</TableCell>
+              <TableCell>Nombre</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Rol</TableCell>
+              <TableCell>Acciones</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredUsuarios.map((usuario) => (
+              <TableRow key={usuario.id}>
+                <TableCell>{usuario.id}</TableCell>
+                <TableCell>{usuario.nombre}</TableCell>
+                <TableCell>{usuario.email}</TableCell>
+                <TableCell>{usuario.rol}</TableCell>
+                <TableCell>
+                  <IconButton onClick={() => handleEdit(usuario)} color="primary">
+                    <Edit />
+                  </IconButton>
+                  <IconButton onClick={() => handleDelete(usuario.id)} color="error">
+                    <Delete />
+                  </IconButton>
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredUsuarios.map((usuario) => (
-                <TableRow key={usuario.id}>
-                  <TableCell>{usuario.nombre}</TableCell>
-                  <TableCell>{usuario.email}</TableCell>
-                  <TableCell>{usuario.rol}</TableCell>
-                  <TableCell>{usuario.telefono}</TableCell>
-                  <TableCell>{usuario.direccion}</TableCell>
-                  <TableCell align="right">
-                    <IconButton onClick={() => handleEdit(usuario)} color="primary">
-                      <Edit />
-                    </IconButton>
-                    <IconButton onClick={() => handleDelete(usuario.id)} color="error">
-                      <Delete />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      {/* Vista móvil - Cards */}
-      {isMobile && (
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          {filteredUsuarios.map((usuario) => (
-            <Grid item xs={12} key={usuario.id}>
-              <Card sx={{
-                transition: 'transform 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: 3
-                }
-              }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {usuario.nombre}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    <strong>Email:</strong> {usuario.email}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    <strong>Rol:</strong> {usuario.rol}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    <strong>Teléfono:</strong> {usuario.telefono}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    <strong>Dirección:</strong> {usuario.direccion}
-                  </Typography>
-                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                    <IconButton onClick={() => handleEdit(usuario)} color="primary" size="small">
-                      <Edit />
-                    </IconButton>
-                    <IconButton onClick={() => handleDelete(usuario.id)} color="error" size="small">
-                      <Delete />
-                    </IconButton>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-
-      {/* Modal de edición/creación */}
+      {/* Modal para editar/crear */}
       <Dialog open={openModal} onClose={handleCancel} maxWidth="sm" fullWidth>
-        <DialogTitle>{isCreating ? 'Crear Usuario' : 'Editar Usuario'}</DialogTitle>
+        <DialogTitle>
+          {isCreating ? 'Nuevo Usuario' : 'Editar Usuario'}
+        </DialogTitle>
         <DialogContent>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
             <TextField
               label="Nombre"
@@ -335,7 +287,6 @@ export default function UsersAdmin() {
               value={form.nombre || ''}
               onChange={handleChange}
               fullWidth
-              required
             />
             <TextField
               label="Email"
@@ -344,7 +295,6 @@ export default function UsersAdmin() {
               value={form.email || ''}
               onChange={handleChange}
               fullWidth
-              required
             />
             {isCreating && (
               <TextField
@@ -354,45 +304,33 @@ export default function UsersAdmin() {
                 value={form.password || ''}
                 onChange={handleChange}
                 fullWidth
-                required
               />
             )}
             <FormControl fullWidth>
               <InputLabel>Rol</InputLabel>
               <Select
                 name="rol"
-                value={form.rol || ''}
+                value={form.rol || 'cliente'}
                 onChange={handleChange}
                 label="Rol"
               >
-                <MenuItem value="admin">Admin</MenuItem>
+                <MenuItem value="admin">Administrador</MenuItem>
                 <MenuItem value="cliente">Cliente</MenuItem>
               </Select>
             </FormControl>
-            <TextField
-              label="Teléfono"
-              name="telefono"
-              value={form.telefono || ''}
-              onChange={handleChange}
-              fullWidth
-            />
-            <TextField
-              label="Dirección"
-              name="direccion"
-              value={form.direccion || ''}
-              onChange={handleChange}
-              fullWidth
-              multiline
-              rows={2}
-            />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancel} color="inherit">
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} color="primary" variant="contained">
-            {isCreating ? 'Crear' : 'Guardar'}
+          <Button onClick={handleCancel}>Cancelar</Button>
+          <Button 
+            onClick={handleSave}
+            variant="contained"
+            sx={{
+              backgroundColor: '#e4adb0',
+              '&:hover': { backgroundColor: '#d49a9d' }
+            }}
+          >
+            Guardar
           </Button>
         </DialogActions>
       </Dialog>
