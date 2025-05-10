@@ -9,12 +9,11 @@ import {
   Badge
 } from '@mui/material';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
-import { config } from '../config';
 
 const ProductCard = React.memo(({ variant, onAddToCart, cart }) => {
   const getOptimizedImageUrl = (imageName) => {
     if (!imageName) return '';
-    return `${config.API_URL}/products/optimized/${imageName}`;
+    return `/products/optimized/${imageName}`;
   };
 
   return (
@@ -50,10 +49,6 @@ const ProductCard = React.memo(({ variant, onAddToCart, cart }) => {
             margin: 'auto'
           }}
           loading="lazy"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = '/placeholder.png';
-          }}
         />
       </CardMedia>
       <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>

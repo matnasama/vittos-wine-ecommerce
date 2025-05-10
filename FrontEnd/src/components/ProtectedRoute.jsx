@@ -17,13 +17,13 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
           throw new Error('No authenticated');
         }
 
-        // Verificar si es admin si se requiere
+        // Verificar token con el backend primero
+        await authService.verifyToken();
+
+        // Después de verificar el token, verificar el rol si es necesario
         if (requireAdmin && !authService.isAdmin()) {
           throw new Error('Not admin');
         }
-
-        // Verificar token con el backend
-        await authService.verifyToken();
         
         setIsAuthenticated(true);
         setIsAdmin(authService.isAdmin());

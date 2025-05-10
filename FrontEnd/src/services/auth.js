@@ -19,6 +19,9 @@ class AuthService {
   }
 
   setUser(user) {
+    if (user && user.role) {
+      user.role = user.role.toLowerCase();
+    }
     this.user = user;
     localStorage.setItem(config.USER_KEY, JSON.stringify(user));
   }
@@ -47,11 +50,6 @@ class AuthService {
       });
 
       const { token, user } = response.data;
-      
-      if (user.role) {
-        user.role = user.role.toLowerCase();
-      }
-      
       this.setToken(token);
       this.setUser(user);
       
@@ -67,11 +65,6 @@ class AuthService {
     try {
       const response = await axios.post(config.API_ENDPOINTS.REGISTER, userData);
       const { token, user } = response.data;
-      
-      if (user.role) {
-        user.role = user.role.toLowerCase();
-      }
-      
       this.setToken(token);
       this.setUser(user);
       
@@ -94,10 +87,9 @@ class AuthService {
       const { user } = response.data;
       
       if (user) {
-        if (user.role) {
-          user.role = user.role.toLowerCase();
-        }
         this.setUser(user);
+      } else {
+        throw new Error('Invalid user data');
       }
       
       return response.data;
