@@ -26,14 +26,16 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
         const response = await authService.verifyToken();
         console.log('Respuesta del backend:', response);
         
-        // Actualizar el estado de autenticación y rol
-        setIsAuthenticated(true);
         const userRole = response.user.rol.toLowerCase();
         console.log('Rol del usuario:', userRole);
-        setIsAdmin(userRole === 'admin');
+        
+        // Actualizar estados de forma síncrona
+        const isUserAdmin = userRole === 'admin';
+        setIsAdmin(isUserAdmin);
+        setIsAuthenticated(true);
 
         // Si se requiere admin y el usuario no lo es, lanzar error
-        if (requireAdmin && userRole !== 'admin') {
+        if (requireAdmin && !isUserAdmin) {
           console.log('Se requiere admin pero el usuario no lo es');
           throw new Error('Not admin');
         }
@@ -53,6 +55,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
     verifyAuth();
   }, [requireAdmin]);
 
+  // Esperar a que termine la carga
   if (loading) {
     return (
       <Box
@@ -66,16 +69,20 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
     );
   }
 
+  // Verificar autenticación
   if (!isAuthenticated) {
     console.log('Usuario no autenticado, redirigiendo a login');
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
+  // Verificar rol de admin si es necesario
   if (requireAdmin && !isAdmin) {
     console.log('Usuario no es admin, redirigiendo a home');
     return <Navigate to="/" replace />;
   }
 
+  // Si todo está bien, renderizar el componente hijo
+  console.log('Renderizando contenido protegido');
   return children;
 };
 
