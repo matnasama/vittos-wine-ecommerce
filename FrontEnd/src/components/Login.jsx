@@ -31,7 +31,7 @@ const Login = ({ onLogin }) => {
         onLogin(user);
       }
       
-      if (user.usuario.rol === 'admin') {
+      if (user.rol === 'admin') {
         navigate('/admin');
       } else {
         navigate('/');
