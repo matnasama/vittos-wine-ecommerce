@@ -65,6 +65,37 @@ app.get('/api/usuarios', verificarToken, esAdmin, async (req, res) => {
   }
 });
 
+// Crear usuario (solo admin)
+app.post('/api/usuarios', verificarToken, esAdmin, async (req, res) => {
+  const { nombre, email, password, rol, telefono, direccion } = req.body;
+
+  try {
+    const client = await getConnection();
+    
+    // Verificar si el email ya existe
+    const existingUser = await client.query(
+      'SELECT * FROM usuarios WHERE email = $1',
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ message: 'El email ya está registrado' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await client.query(
+      'INSERT INTO usuarios (nombre, email, telefono, password, direccion, rol) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, nombre, email, rol, telefono, direccion',
+      [nombre, email, telefono, hashedPassword, direccion, rol || 'cliente']
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error al crear usuario:', error);
+    res.status(500).json({ message: 'Error al crear usuario' });
+  }
+});
+
 // Actualizar usuario (solo admin)
 app.put('/api/usuarios/:id', verificarToken, esAdmin, async (req, res) => {
   const { id } = req.params;

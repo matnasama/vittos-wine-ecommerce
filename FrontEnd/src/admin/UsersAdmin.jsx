@@ -133,10 +133,16 @@ export default function UsersAdmin() {
   const handleSave = async () => {
     try {
       setError('');
+      const payload = {
+        ...form,
+        telefono: form.telefono || '',
+        direccion: form.direccion || ''
+      };
+
       if (isCreating) {
-        await axios.post(config.API_ENDPOINTS.ADMIN_USUARIOS, form);
+        await axios.post(config.API_ENDPOINTS.ADMIN_USUARIOS, payload);
       } else {
-        await axios.put(`${config.API_ENDPOINTS.ADMIN_USUARIOS}/${editandoId}`, form);
+        await axios.put(`${config.API_ENDPOINTS.ADMIN_USUARIOS}/${editandoId}`, payload);
       }
       setEditandoId(null);
       setOpenModal(false);
