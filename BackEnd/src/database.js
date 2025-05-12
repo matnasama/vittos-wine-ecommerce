@@ -9,10 +9,8 @@ pool.connect((err, client, release) => {
   if (err) {
     console.error('Error al conectar con la base de datos:', err);
     console.error('Detalles de la conexión:', config.getConnectionConfig());
-  } else {
-    console.log('Conexión exitosa a la base de datos');
-    release();
   }
+  release();
 });
 
 function getConnection() {

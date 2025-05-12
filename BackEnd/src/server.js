@@ -382,9 +382,7 @@ app.put('/api/pedidos/:id', verificarToken, esAdmin, async (req, res) => {
 });
 
 // 🚀 Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+app.listen(PORT);
 
 app.get('/api/admin/stats', verificarToken, esAdmin, async (req, res) => {
   try {

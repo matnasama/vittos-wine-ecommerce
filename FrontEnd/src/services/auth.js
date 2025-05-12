@@ -72,8 +72,6 @@ class AuthService {
 
   async login(email, password) {
     try {
-      console.log('Intentando login con:', { email });
-      
       // Limpiar headers antes de intentar login
       delete axios.defaults.headers.common['Authorization'];
       
@@ -81,8 +79,6 @@ class AuthService {
         email,
         password
       });
-
-      console.log('Respuesta del login:', response.data);
 
       if (!response.data || !response.data.token || !response.data.usuario) {
         throw new Error('Respuesta inválida del servidor');
@@ -103,7 +99,6 @@ class AuthService {
       
       return response.data;
     } catch (error) {
-      console.error('Error en login:', error);
       if (error.response) {
         console.error('Detalles del error:', {
           status: error.response.status,
@@ -124,7 +119,6 @@ class AuthService {
       
       return { token, usuario };
     } catch (error) {
-      console.error('Error en registro:', error);
       this.logout();
       throw error;
     }
@@ -133,31 +127,24 @@ class AuthService {
   async verifyToken() {
     const token = localStorage.getItem(config.TOKEN_KEY);
     if (!token) {
-      console.log('No hay token disponible');
       throw new Error('No token available');
     }
 
     try {
-      console.log('Enviando petición de verificación al backend...');
       const response = await axios.get(config.API_ENDPOINTS.VERIFY_TOKEN, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       
-      console.log('Respuesta del backend:', response.data);
-      
       if (response.data && response.data.usuario) {
-        console.log('Usuario encontrado:', response.data.usuario);
         this.setToken(token);
         this.setUser(response.data.usuario);
         return response.data;
       } else {
-        console.log('No se encontró información del usuario en la respuesta');
         throw new Error('Invalid user data');
       }
     } catch (error) {
-      console.error('Error en verificación de token:', error);
       if (error.response?.status === 404) {
         console.error('Endpoint no encontrado. Verificar configuración de API.');
       }

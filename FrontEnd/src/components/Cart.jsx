@@ -132,32 +132,40 @@ const Cart = () => {
                 transition={{ duration: 0.3 }}
               >
                 <Paper
-                  sx={{ mb: 2, p: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', justifyContent: 'space-between' }}
+                  sx={{
+                    mb: 2,
+                    p: 2,
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 2
+                  }}
                 >
-                  <Box display="flex" alignItems="center" gap={2}>
+                  <Box display="flex" alignItems="center" gap={2} sx={{ minWidth: 0, flex: 2 }}>
                     <img
                       src={`/products/optimized/${item.imagen}`}
                       alt={item.nombre}
                       style={{ width: 60, height: 60, objectFit: 'contain', borderRadius: 8 }}
                     />
-                    <Box>
-                      <Typography fontWeight="bold">{item.nombre}</Typography>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography fontWeight="bold" sx={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.nombre}</Typography>
                       <Typography variant="body2">${item.price.toFixed(2)}</Typography>
                     </Box>
                   </Box>
 
-                  <Box display="flex" alignItems="center" gap={1} mt={{ xs: 2, sm: 0 }}>
+                  <Box display="flex" alignItems="center" gap={1} mt={{ xs: 2, sm: 0 }} sx={{ minWidth: 120, justifyContent: 'center', flex: 1 }}>
                     <IconButton onClick={() => updateQuantity(index, -1)}><RemoveIcon /></IconButton>
-                    <Typography>{item.quantity}</Typography>
+                    <Typography sx={{ width: 24, textAlign: 'center' }}>{item.quantity}</Typography>
                     <IconButton onClick={() => updateQuantity(index, 1)}><AddIcon /></IconButton>
                   </Box>
 
-                  <Box textAlign="right" mt={{ xs: 2, sm: 0 }}>
+                  <Box textAlign="right" mt={{ xs: 2, sm: 0 }} sx={{ minWidth: 120, flex: 1 }}>
                     <Typography variant="subtitle2">Subtotal</Typography>
                     <Typography>${(item.price * item.quantity).toFixed(2)}</Typography>
                   </Box>
 
-                  <IconButton onClick={() => handleRemoveFromCart(index)} sx={{ color: 'error.main' }}>
+                  <IconButton onClick={() => handleRemoveFromCart(index)} sx={{ color: 'error.main', flex: 'none' }}>
                     <DeleteIcon />
                   </IconButton>
                 </Paper>

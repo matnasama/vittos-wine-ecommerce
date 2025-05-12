@@ -23,8 +23,6 @@ async function optimizeImage(inputPath, outputPath) {
       })
       .webp({ quality: 80 })
       .toFile(outputPath);
-    
-    console.log(`Optimizada: ${path.basename(inputPath)} -> ${path.basename(outputPath)}`);
   } catch (error) {
     console.error(`Error al optimizar ${inputPath}:`, error);
   }
@@ -42,8 +40,6 @@ async function optimizeAllImages() {
         await optimizeImage(inputPath, outputPath);
       }
     }
-    
-    console.log('¡Optimización de imágenes completada!');
   } catch (error) {
     console.error('Error durante la optimización:', error);
   }

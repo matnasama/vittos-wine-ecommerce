@@ -62,99 +62,118 @@ export default function Dashboard() {
         Panel de Control
       </Typography>
 
-      <Grid container spacing={4} justifyContent="center" sx={{ maxWidth: 1200 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={4}
-            sx={{
-              p: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              bgcolor: '#e4adb0',
-              color: 'white',
-              borderRadius: 3,
-              minWidth: 200
-            }}
-          >
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
-              Total Pedidos
-            </Typography>
-            <Typography variant="h2" sx={{ fontWeight: 700 }}>
-              {stats.totalPedidos}
-            </Typography>
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={4}
-            sx={{
-              p: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              bgcolor: '#d49a9d',
-              color: 'white',
-              borderRadius: 3,
-              minWidth: 200
-            }}
-          >
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
-              Pedidos Pendientes
-            </Typography>
-            <Typography variant="h2" sx={{ fontWeight: 700 }}>
-              {stats.pedidosPendientes}
-            </Typography>
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={4}
-            sx={{
-              p: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              bgcolor: '#c4878a',
-              color: 'white',
-              borderRadius: 3,
-              minWidth: 200
-            }}
-          >
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
-              Total Productos
-            </Typography>
-            <Typography variant="h2" sx={{ fontWeight: 700 }}>
-              {stats.totalProductos}
-            </Typography>
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            elevation={4}
-            sx={{
-              p: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              bgcolor: '#b37477',
-              color: 'white',
-              borderRadius: 3,
-              minWidth: 200
-            }}
-          >
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
-              Total Usuarios
-            </Typography>
-            <Typography variant="h2" sx={{ fontWeight: 700 }}>
-              {stats.totalUsuarios}
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: 4,
+          width: '100%',
+          maxWidth: 1100,
+          mx: 'auto',
+        }}
+      >
+        <Paper
+          elevation={4}
+          sx={{
+            p: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            bgcolor: '#e4adb0',
+            color: 'white',
+            borderRadius: 3,
+            width: { xs: '90vw', sm: 220, md: 240 },
+            height: 180,
+            boxSizing: 'border-box',
+            justifyContent: 'center',
+            minWidth: 180,
+            flex: '1 1 220px',
+          }}
+        >
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+            Total Pedidos
+          </Typography>
+          <Typography variant="h2" sx={{ fontWeight: 700 }}>
+            {stats.totalPedidos}
+          </Typography>
+        </Paper>
+        <Paper
+          elevation={4}
+          sx={{
+            p: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            bgcolor: '#d49a9d',
+            color: 'white',
+            borderRadius: 3,
+            width: { xs: '90vw', sm: 220, md: 240 },
+            height: 180,
+            boxSizing: 'border-box',
+            justifyContent: 'center',
+            minWidth: 180,
+            flex: '1 1 220px',
+          }}
+        >
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+            Pedidos Pendientes
+          </Typography>
+          <Typography variant="h2" sx={{ fontWeight: 700 }}>
+            {stats.pedidosPendientes}
+          </Typography>
+        </Paper>
+        <Paper
+          elevation={4}
+          sx={{
+            p: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            bgcolor: '#c4878a',
+            color: 'white',
+            borderRadius: 3,
+            width: { xs: '90vw', sm: 220, md: 240 },
+            height: 180,
+            boxSizing: 'border-box',
+            justifyContent: 'center',
+            minWidth: 180,
+            flex: '1 1 220px',
+          }}
+        >
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+            Total Productos
+          </Typography>
+          <Typography variant="h2" sx={{ fontWeight: 700 }}>
+            {stats.totalProductos}
+          </Typography>
+        </Paper>
+        <Paper
+          elevation={4}
+          sx={{
+            p: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            bgcolor: '#b37477',
+            color: 'white',
+            borderRadius: 3,
+            width: { xs: '90vw', sm: 220, md: 240 },
+            height: 180,
+            boxSizing: 'border-box',
+            justifyContent: 'center',
+            minWidth: 180,
+            flex: '1 1 220px',
+          }}
+        >
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+            Total Usuarios
+          </Typography>
+          <Typography variant="h2" sx={{ fontWeight: 700 }}>
+            {stats.totalUsuarios}
+          </Typography>
+        </Paper>
+      </Box>
     </Box>
   );
 }

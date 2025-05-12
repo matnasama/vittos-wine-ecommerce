@@ -17,26 +17,21 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
         setError(null);
         
         const response = await authService.verifyToken();
-        console.log('Respuesta del backend:', response);
         
         if (response && response.usuario) {
           const userRole = response.usuario.rol;
-          console.log('Rol del usuario:', userRole);
           
           setIsAuthenticated(true);
           setIsAdmin(userRole === 'admin');
           
           if (requireAdmin && userRole !== 'admin') {
-            console.log('Usuario no es administrador');
             setError('Acceso denegado: Se requieren privilegios de administrador');
           }
         } else {
-          console.log('No se encontró usuario en la respuesta');
           setIsAuthenticated(false);
           setIsAdmin(false);
         }
       } catch (err) {
-        console.error('Error en la verificación:', err);
         setError(err.message || 'Error en la verificación de autenticación');
         setIsAuthenticated(false);
         setIsAdmin(false);
@@ -57,20 +52,16 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
   }
 
   if (error) {
-    console.log('Error de autenticación:', error);
     return <Navigate to="/login" state={{ from: location, error }} replace />;
   }
 
   if (!isAuthenticated) {
-    console.log('Usuario no autenticado');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (requireAdmin && !isAdmin) {
-    console.log('Usuario no autorizado como admin');
     return <Navigate to="/" replace />;
   }
 
-  console.log('Renderizando contenido protegido');
   return children;
 } 
