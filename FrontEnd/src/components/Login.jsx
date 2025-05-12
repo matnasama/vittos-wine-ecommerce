@@ -7,9 +7,10 @@ import {
   Button,
   Box,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Link
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { authService } from '../services/auth';
 
 const Login = ({ onLogin }) => {
@@ -88,6 +89,14 @@ const Login = ({ onLogin }) => {
             >
               {loading ? <CircularProgress size={24} /> : 'Iniciar Sesión'}
             </Button>
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <Typography variant="body2">
+                ¿No tienes una cuenta?{' '}
+                <Link component={RouterLink} to="/register" color="primary">
+                  Regístrate aquí
+                </Link>
+              </Typography>
+            </Box>
           </form>
         </Paper>
       </Box>

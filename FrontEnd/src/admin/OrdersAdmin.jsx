@@ -3,19 +3,18 @@ import {
     Box,
     Typography,
     Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
+    Grid,
     Button,
     CircularProgress,
     Alert,
     Select,
     MenuItem,
     FormControl,
-    InputLabel
+    Card,
+    CardContent,
+    Divider,
+    useTheme,
+    useMediaQuery
 } from "@mui/material";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -28,11 +27,13 @@ const OrdersAdmin = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const fetchPedidos = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem("token");
+            const token = localStorage.getItem(config.TOKEN_KEY);
             
             if (!token) {
                 setError("No hay sesión activa. Por favor, inicie sesión.");
@@ -40,14 +41,20 @@ const OrdersAdmin = () => {
                 return;
             }
 
-            const response = await axios.get(`${config.API_ENDPOINTS.ADMIN_PEDIDOS}`, {
+            const response = await axios.get(config.API_ENDPOINTS.ADMIN_PEDIDOS, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json"
                 }
             });
             
-            setPedidos(response.data);
+            // Asegurarse de que cada pedido tenga un array de productos
+            const pedidosProcesados = response.data.map(pedido => ({
+                ...pedido,
+                productos: pedido.productos || []
+            }));
+            
+            setPedidos(pedidosProcesados);
             setError(null);
         } catch (err) {
             console.error("Error al obtener pedidos:", err);
@@ -56,8 +63,8 @@ const OrdersAdmin = () => {
                 navigate("/");
             } else if (err.response?.status === 401) {
                 setError("Sesión expirada. Por favor, inicie sesión nuevamente.");
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
+                localStorage.removeItem(config.TOKEN_KEY);
+                localStorage.removeItem(config.USER_KEY);
                 navigate("/login");
             } else {
                 setError("Error al cargar los pedidos. Por favor, intente nuevamente.");
@@ -68,7 +75,7 @@ const OrdersAdmin = () => {
     };
 
     useEffect(() => {
-        const user = JSON.parse(localStorage.getItem("user"));
+        const user = JSON.parse(localStorage.getItem(config.USER_KEY));
         if (!user || user.rol !== "admin") {
             navigate("/");
             return;
@@ -78,7 +85,7 @@ const OrdersAdmin = () => {
 
     const handleEstadoChange = async (pedidoId, nuevoEstado) => {
         try {
-            const token = localStorage.getItem("token");
+            const token = localStorage.getItem(config.TOKEN_KEY);
             await axios.put(
                 `${config.API_ENDPOINTS.ADMIN_PEDIDOS}/${pedidoId}`,
                 { estado: nuevoEstado },
@@ -94,8 +101,8 @@ const OrdersAdmin = () => {
             console.error("Error al actualizar estado:", err);
             if (err.response?.status === 401) {
                 setError("Sesión expirada. Por favor, inicie sesión nuevamente.");
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
+                localStorage.removeItem(config.TOKEN_KEY);
+                localStorage.removeItem(config.USER_KEY);
                 navigate("/login");
             } else {
                 setError("Error al actualizar el estado del pedido.");
@@ -137,82 +144,90 @@ const OrdersAdmin = () => {
             <Typography variant="h4" gutterBottom>
                 Gestión de Pedidos
             </Typography>
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Fecha</TableCell>
-                            <TableCell>Cliente</TableCell>
-                            <TableCell>Productos</TableCell>
-                            <TableCell>Total</TableCell>
-                            <TableCell>Estado</TableCell>
-                            <TableCell>Acciones</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {pedidos.map((pedido) => (
-                            <TableRow key={pedido.id}>
-                                <TableCell>{pedido.id}</TableCell>
-                                <TableCell>{formatDate(pedido.fecha)}</TableCell>
-                                <TableCell>
-                                    <Typography variant="body2">
-                                        {pedido.usuario_nombre}
-                                    </Typography>
-                                    <Typography variant="body2" color="textSecondary">
-                                        {pedido.usuario_email}
-                                    </Typography>
-                                    <Typography variant="body2" color="textSecondary">
-                                        {pedido.usuario_telefono}
-                                    </Typography>
-                                    <Typography variant="body2" color="textSecondary">
-                                        {pedido.usuario_direccion}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    {pedido.productos.map((producto) => (
-                                        <Box key={producto.id} mb={1}>
-                                            <Typography variant="body2">
-                                                {producto.nombre} x {producto.cantidad}
+            <Grid container spacing={3}>
+                {pedidos.map((pedido) => (
+                    <Grid item xs={12} key={pedido.id}>
+                        <Card>
+                            <CardContent>
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} sm={6}>
+                                        <Typography variant="h6" gutterBottom>
+                                            Pedido #{pedido.id}
+                                        </Typography>
+                                        <Typography variant="body2" color="textSecondary">
+                                            {formatDate(pedido.fecha)}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth size="small">
+                                            <Select
+                                                value={pedido.estado}
+                                                onChange={(e) =>
+                                                    handleEstadoChange(pedido.id, e.target.value)
+                                                }
+                                            >
+                                                <MenuItem value="pendiente">Pendiente</MenuItem>
+                                                <MenuItem value="entregado">Entregado</MenuItem>
+                                                <MenuItem value="cancelado">Cancelado</MenuItem>
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+
+                                    <Grid item xs={12}>
+                                        <Typography variant="subtitle1" gutterBottom>
+                                            Información del Cliente
+                                        </Typography>
+                                        <Typography variant="body2">
+                                            {pedido.usuario_nombre}
+                                        </Typography>
+                                        <Typography variant="body2" color="textSecondary">
+                                            {pedido.usuario_email}
+                                        </Typography>
+                                        <Typography variant="body2" color="textSecondary">
+                                            {pedido.usuario_telefono}
+                                        </Typography>
+                                        <Typography variant="body2" color="textSecondary">
+                                            {pedido.usuario_direccion}
+                                        </Typography>
+                                    </Grid>
+
+                                    <Grid item xs={12}>
+                                        <Typography variant="subtitle1" gutterBottom>
+                                            Productos
+                                        </Typography>
+                                        {pedido.productos && pedido.productos.map((producto) => (
+                                            <Box key={producto.id} mb={1}>
+                                                <Typography variant="body2">
+                                                    {producto.marca} - {producto.nombre} x {producto.cantidad}
+                                                </Typography>
+                                                <Typography variant="body2" color="textSecondary">
+                                                    {formatCurrency(producto.precio)} c/u
+                                                </Typography>
+                                            </Box>
+                                        ))}
+                                    </Grid>
+
+                                    <Grid item xs={12}>
+                                        <Divider sx={{ my: 1 }} />
+                                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="h6">
+                                                Total: {formatCurrency(pedido.total)}
                                             </Typography>
-                                            <Typography variant="body2" color="textSecondary">
-                                                {formatCurrency(producto.precio)} c/u
-                                            </Typography>
+                                            <Button
+                                                variant="outlined"
+                                                size="small"
+                                                onClick={() => handleEstadoChange(pedido.id, "entregado")}
+                                            >
+                                                Marcar como Entregado
+                                            </Button>
                                         </Box>
-                                    ))}
-                                </TableCell>
-                                <TableCell>{formatCurrency(pedido.total)}</TableCell>
-                                <TableCell>
-                                    <FormControl fullWidth size="small">
-                                        <Select
-                                            value={pedido.estado}
-                                            onChange={(e) =>
-                                                handleEstadoChange(pedido.id, e.target.value)
-                                            }
-                                        >
-                                            <MenuItem value="pendiente">Pendiente</MenuItem>
-                                            <MenuItem value="confirmado">Confirmado</MenuItem>
-                                            <MenuItem value="en_preparacion">En Preparación</MenuItem>
-                                            <MenuItem value="enviado">Enviado</MenuItem>
-                                            <MenuItem value="entregado">Entregado</MenuItem>
-                                            <MenuItem value="cancelado">Cancelado</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </TableCell>
-                                <TableCell>
-                                    <Button
-                                        variant="outlined"
-                                        size="small"
-                                        onClick={() => handleEstadoChange(pedido.id, "entregado")}
-                                    >
-                                        Marcar como Entregado
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                                    </Grid>
+                                </Grid>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                ))}
+            </Grid>
         </Box>
     );
 };

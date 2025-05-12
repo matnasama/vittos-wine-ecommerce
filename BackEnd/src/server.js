@@ -29,6 +29,11 @@ app.use('/api/productos', productosRouter);
 app.use('/api/pedidos', pedidosRouter);
 app.use('/api/usuarios', usuariosRouter);
 
+// Rutas de administrador
+app.use('/api/admin/productos', productosRouter);
+app.use('/api/admin/pedidos', pedidosRouter);
+app.use('/api/admin/usuarios', usuariosRouter);
+
 // Middleware para verificar token
 const verificarToken = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -53,8 +58,8 @@ const esAdmin = (req, res, next) => {
   next();
 };
 
-// Obtener todos los usuarios (solo admin)
-app.get('/api/usuarios', verificarToken, esAdmin, async (req, res) => {
+// Rutas de administrador
+app.get('/api/admin/usuarios', verificarToken, esAdmin, async (req, res) => {
   try {
     const client = await getConnection();
     const result = await client.query('SELECT id, nombre, email, rol, telefono, direccion FROM usuarios');
@@ -62,6 +67,65 @@ app.get('/api/usuarios', verificarToken, esAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error al obtener usuarios:', error);
     res.status(500).json({ mensaje: 'Error al obtener usuarios' });
+  }
+});
+
+app.get('/api/admin/pedidos', verificarToken, esAdmin, async (req, res) => {
+  try {
+    const client = await getConnection();
+    const result = await client.query(`
+      SELECT 
+        p.id AS pedido_id, 
+        p.fecha, 
+        p.total, 
+        p.estado,
+        u.nombre AS usuario_nombre, 
+        u.email AS usuario_email,
+        u.direccion AS usuario_direccion,
+        u.telefono AS usuario_telefono,
+        dp.producto_id, 
+        dp.cantidad, 
+        dp.precio,
+        pr.nombre AS producto_nombre, 
+        pr.categoria,
+        pr.imagen_url
+      FROM pedidos p
+      JOIN usuarios u ON p.usuario_id = u.id
+      JOIN detalle_pedidos dp ON p.id = dp.pedido_id
+      JOIN productos pr ON dp.producto_id = pr.id
+      ORDER BY p.fecha DESC
+    `);
+
+    const pedidosAgrupados = {};
+    result.rows.forEach(row => {
+      if (!pedidosAgrupados[row.pedido_id]) {
+        pedidosAgrupados[row.pedido_id] = {
+          id: row.pedido_id,
+          fecha: row.fecha,
+          total: row.total,
+          estado: row.estado,
+          usuario_nombre: row.usuario_nombre,
+          usuario_email: row.usuario_email,
+          usuario_direccion: row.usuario_direccion,
+          usuario_telefono: row.usuario_telefono,
+          productos: []
+        };
+      }
+
+      pedidosAgrupados[row.pedido_id].productos.push({
+        id: row.producto_id,
+        nombre: row.producto_nombre,
+        categoria: row.categoria,
+        cantidad: row.cantidad,
+        precio: row.precio,
+        imagen_url: row.imagen_url
+      });
+    });
+
+    res.json(Object.values(pedidosAgrupados));
+  } catch (error) {
+    console.error('Error al obtener pedidos:', error);
+    res.status(500).json({ error: 'Error al obtener pedidos' });
   }
 });
 
@@ -299,66 +363,6 @@ app.get('/api/mis-pedidos', verifyToken, async (req, res) => {
   }
 });
 
-// Obtener todos los pedidos (solo admin)
-app.get('/api/pedidos', verificarToken, esAdmin, async (req, res) => {
-  try {
-    const client = await getConnection();
-    const result = await client.query(`
-      SELECT 
-        p.id AS pedido_id, 
-        p.fecha, 
-        p.total, 
-        p.estado,
-        u.nombre AS usuario_nombre, 
-        u.email AS usuario_email,
-        u.direccion AS usuario_direccion,
-        u.telefono AS usuario_telefono,
-        dp.producto_id, 
-        dp.cantidad, 
-        dp.precio,
-        pr.nombre AS producto_nombre, 
-        pr.categoria,
-        pr.imagen_url
-      FROM pedidos p
-      JOIN usuarios u ON p.usuario_id = u.id
-      JOIN detalle_pedidos dp ON p.id = dp.pedido_id
-      JOIN productos pr ON dp.producto_id = pr.id
-      ORDER BY p.fecha DESC
-    `);
-
-    const pedidosAgrupados = {};
-    result.rows.forEach(row => {
-      if (!pedidosAgrupados[row.pedido_id]) {
-        pedidosAgrupados[row.pedido_id] = {
-          id: row.pedido_id,
-          fecha: row.fecha,
-          total: row.total,
-          estado: row.estado,
-          usuario_nombre: row.usuario_nombre,
-          usuario_email: row.usuario_email,
-          usuario_direccion: row.usuario_direccion,
-          usuario_telefono: row.usuario_telefono,
-          productos: []
-        };
-      }
-
-      pedidosAgrupados[row.pedido_id].productos.push({
-        id: row.producto_id,
-        nombre: row.producto_nombre,
-        categoria: row.categoria,
-        cantidad: row.cantidad,
-        precio: row.precio,
-        imagen_url: row.imagen_url
-      });
-    });
-
-    res.json(Object.values(pedidosAgrupados));
-  } catch (error) {
-    console.error('Error al obtener pedidos:', error);
-    res.status(500).json({ error: 'Error al obtener pedidos' });
-  }
-});
-
 // Actualizar estado de pedido (solo admin)
 app.put('/api/pedidos/:id', verificarToken, esAdmin, async (req, res) => {
   const { id } = req.params;
@@ -380,4 +384,25 @@ app.put('/api/pedidos/:id', verificarToken, esAdmin, async (req, res) => {
 // 🚀 Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});
+
+app.get('/api/admin/stats', verificarToken, esAdmin, async (req, res) => {
+  try {
+    const client = await getConnection();
+
+    const [{ count: totalPedidos }] = (await client.query('SELECT COUNT(*) FROM pedidos')).rows;
+    const [{ count: pedidosPendientes }] = (await client.query("SELECT COUNT(*) FROM pedidos WHERE estado = 'pendiente'")).rows;
+    const [{ count: totalProductos }] = (await client.query('SELECT COUNT(*) FROM productos')).rows;
+    const [{ count: totalUsuarios }] = (await client.query('SELECT COUNT(*) FROM usuarios')).rows;
+
+    res.json({
+      totalPedidos: Number(totalPedidos),
+      pedidosPendientes: Number(pedidosPendientes),
+      totalProductos: Number(totalProductos),
+      totalUsuarios: Number(totalUsuarios)
+    });
+  } catch (err) {
+    console.error('Error al obtener stats:', err);
+    res.status(500).json({ message: 'Error al obtener estadísticas' });
+  }
 });

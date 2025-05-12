@@ -3,18 +3,6 @@ const database = require("./database");
 const { verifyToken, verifyAdmin } = require("./verifyToken");
 const router = express.Router();
 
-// Obtener todos los pedidos
-router.get("/", async (req, res) => {
-    try {
-        const connection = database.getConnection();
-        const result = await connection.query("SELECT * FROM pedidos ORDER BY id DESC");
-        res.json(result.rows);
-    } catch (err) {
-        console.error("Error al obtener pedidos:", err);
-        res.status(500).json({ message: "Error al obtener pedidos" });
-    }
-});
-
 // Obtener todos los pedidos con detalles (solo admin)
 router.get("/", verifyToken, verifyAdmin, async (req, res) => {
     try {
@@ -22,10 +10,13 @@ router.get("/", verifyToken, verifyAdmin, async (req, res) => {
         const result = await connection.query(`
             SELECT 
                 p.id, p.fecha, p.total, p.estado,
-                u.nombre as usuario_nombre, u.email as usuario_email,
-                u.direccion as usuario_direccion, u.telefono as usuario_telefono,
+                u.nombre as usuario_nombre, 
+                u.email as usuario_email,
+                u.telefono as usuario_telefono,
+                u.direccion as usuario_direccion,
                 dp.producto_id, dp.cantidad, dp.precio,
-                pr.nombre as producto_nombre, pr.categoria, pr.imagen_url
+                pr.nombre as producto_nombre, 
+                pr.categoria as producto_categoria
             FROM pedidos p
             JOIN usuarios u ON p.usuario_id = u.id
             JOIN detalle_pedidos dp ON p.id = dp.pedido_id
@@ -44,8 +35,8 @@ router.get("/", verifyToken, verifyAdmin, async (req, res) => {
                     estado: row.estado,
                     usuario_nombre: row.usuario_nombre,
                     usuario_email: row.usuario_email,
-                    usuario_direccion: row.usuario_direccion,
                     usuario_telefono: row.usuario_telefono,
+                    usuario_direccion: row.usuario_direccion,
                     productos: []
                 };
             }
@@ -53,10 +44,10 @@ router.get("/", verifyToken, verifyAdmin, async (req, res) => {
             pedidosAgrupados[row.id].productos.push({
                 id: row.producto_id,
                 nombre: row.producto_nombre,
-                categoria: row.categoria,
+                categoria: row.producto_categoria,
+                marca: row.producto_categoria,
                 cantidad: row.cantidad,
-                precio: row.precio,
-                imagen_url: row.imagen_url
+                precio: row.precio
             });
         });
 
@@ -67,28 +58,10 @@ router.get("/", verifyToken, verifyAdmin, async (req, res) => {
     }
 });
 
-// Actualizar estado de pedido (solo admin)
-router.put("/:id", verifyToken, verifyAdmin, async (req, res) => {
-    const { id } = req.params;
-    const { estado } = req.body;
-
-    try {
-        const connection = database.getConnection();
-        await connection.query(
-            "UPDATE pedidos SET estado = $1 WHERE id = $2",
-            [estado, id]
-        );
-        res.json({ message: "Estado del pedido actualizado correctamente" });
-    } catch (err) {
-        console.error("Error al actualizar estado del pedido:", err);
-        res.status(500).json({ message: "Error al actualizar estado del pedido" });
-    }
-});
-
 // Obtener pedidos del usuario
 router.get("/mis-pedidos", verifyToken, async (req, res) => {
     try {
-        const connection = database.getConnection();
+        const connection = await database.getConnection();
         const result = await connection.query(`
             SELECT 
                 p.id, p.fecha, p.total, p.estado,
@@ -117,6 +90,7 @@ router.get("/mis-pedidos", verifyToken, async (req, res) => {
                 id: row.producto_id,
                 nombre: row.producto_nombre,
                 categoria: row.categoria,
+                marca: row.categoria,
                 cantidad: row.cantidad,
                 precio: row.precio
             });
@@ -129,13 +103,37 @@ router.get("/mis-pedidos", verifyToken, async (req, res) => {
     }
 });
 
+// Actualizar estado de pedido (solo admin)
+router.put("/:id", verifyToken, verifyAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { estado } = req.body;
+
+    // Validar que el estado sea uno de los permitidos
+    const estadosPermitidos = ['pendiente', 'entregado', 'cancelado'];
+    if (!estadosPermitidos.includes(estado)) {
+        return res.status(400).json({ message: 'Estado no válido' });
+    }
+
+    try {
+        const connection = await database.getConnection();
+        await connection.query(
+            'UPDATE pedidos SET estado = $1 WHERE id = $2',
+            [estado, id]
+        );
+        res.json({ message: 'Estado del pedido actualizado correctamente' });
+    } catch (err) {
+        console.error('Error al actualizar estado del pedido:', err);
+        res.status(500).json({ message: 'Error al actualizar estado del pedido' });
+    }
+});
+
 // Crear un nuevo pedido
 router.post("/orden", verifyToken, async (req, res) => {
     const { productos, total } = req.body;
     const userId = req.user.id;
 
     try {
-        const connection = database.getConnection();
+        const connection = await database.getConnection();
         await connection.query("BEGIN");
 
         // Insertar pedido
